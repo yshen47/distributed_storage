@@ -140,20 +140,20 @@ func init() {
 func init() { proto.RegisterFile("coordinator.proto", fileDescriptor_99e779eb11ceee19) }
 
 var fileDescriptor_99e779eb11ceee19 = []byte{
-	// 207 bytes of a gzipped FileDescriptorProto
+	// 198 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4c, 0xce, 0xcf, 0x2f,
 	0x4a, 0xc9, 0xcc, 0x4b, 0x2c, 0xc9, 0x2f, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x03,
 	0x53, 0xc5, 0x4a, 0xb2, 0x5c, 0xdc, 0x21, 0x45, 0x89, 0x79, 0xc5, 0x89, 0xc9, 0x25, 0x99, 0xf9,
 	0x79, 0x42, 0x7c, 0x5c, 0x4c, 0x99, 0x29, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x4c, 0x99,
 	0x29, 0x4a, 0x2a, 0x5c, 0x1c, 0x6e, 0xa9, 0xa9, 0x29, 0x49, 0x89, 0xc9, 0xd9, 0x42, 0x12, 0x5c,
 	0xec, 0xb9, 0xa9, 0xc5, 0xc5, 0x89, 0xe9, 0xa9, 0x50, 0x05, 0x30, 0xae, 0x12, 0x3b, 0x17, 0xab,
-	0x6b, 0x6e, 0x41, 0x49, 0xa5, 0xd1, 0x6f, 0x46, 0x2e, 0x11, 0x67, 0x84, 0x5d, 0x9e, 0x79, 0x25,
-	0xa9, 0x45, 0x69, 0x89, 0xc9, 0xa9, 0x42, 0xe6, 0x5c, 0xfc, 0xfe, 0x05, 0xa9, 0x79, 0xc8, 0x56,
-	0xf1, 0x42, 0x5c, 0x52, 0xac, 0x07, 0xd6, 0x2a, 0x25, 0x0c, 0xe3, 0x22, 0xa9, 0x51, 0x62, 0x10,
-	0xb2, 0xe6, 0x12, 0x70, 0xce, 0xc9, 0x2f, 0x4e, 0x45, 0xd6, 0x89, 0x4d, 0xa9, 0x94, 0x00, 0x4c,
-	0x10, 0xe6, 0x5e, 0x25, 0x06, 0x21, 0x33, 0x2e, 0x41, 0xe7, 0xfc, 0xdc, 0xdc, 0xcc, 0x12, 0x3c,
-	0xf6, 0x62, 0xd3, 0x67, 0xca, 0x25, 0xe0, 0x98, 0x94, 0x5f, 0x44, 0xa2, 0xb6, 0x24, 0x48, 0x98,
-	0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x46, 0x5e, 0x86, 0x6f, 0x01, 0x00, 0x00,
+	0x6b, 0x6e, 0x41, 0x49, 0xa5, 0xd1, 0x27, 0x46, 0x2e, 0x6e, 0x67, 0x84, 0x5d, 0x42, 0xe6, 0x5c,
+	0xfc, 0xfe, 0x05, 0xa9, 0x79, 0xc8, 0x36, 0xf0, 0x42, 0x1c, 0x50, 0xac, 0x07, 0xd6, 0x21, 0x25,
+	0x0c, 0xe3, 0x22, 0xa9, 0x51, 0x62, 0x10, 0xb2, 0xe6, 0x12, 0x70, 0xce, 0xc9, 0x2f, 0x4e, 0x45,
+	0xd6, 0x89, 0x4d, 0xa9, 0x94, 0x00, 0x4c, 0x10, 0xe6, 0x4c, 0x25, 0x06, 0x21, 0x33, 0x2e, 0x41,
+	0xe7, 0xfc, 0xdc, 0xdc, 0xcc, 0x12, 0x3c, 0xf6, 0x62, 0xd3, 0x67, 0xca, 0x25, 0xe0, 0x98, 0x94,
+	0x5f, 0x44, 0xa2, 0xb6, 0x24, 0x48, 0x50, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x75, 0xcd,
+	0xa4, 0x67, 0x66, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -164,158 +164,155 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// CoordinatorInterfaceClient is the client API for CoordinatorInterface service.
+// CoordinatorClient is the client API for Coordinator service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type CoordinatorInterfaceClient interface {
+type CoordinatorClient interface {
 	OpenTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Transaction, error)
 	CloseTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error)
 	CommitTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error)
 	AbortTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error)
 }
 
-type coordinatorInterfaceClient struct {
+type coordinatorClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewCoordinatorInterfaceClient(cc *grpc.ClientConn) CoordinatorInterfaceClient {
-	return &coordinatorInterfaceClient{cc}
+func NewCoordinatorClient(cc *grpc.ClientConn) CoordinatorClient {
+	return &coordinatorClient{cc}
 }
 
-func (c *coordinatorInterfaceClient) OpenTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Transaction, error) {
+func (c *coordinatorClient) OpenTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Transaction, error) {
 	out := new(Transaction)
-	err := c.cc.Invoke(ctx, "/protos.CoordinatorInterface/OpenTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/OpenTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coordinatorInterfaceClient) CloseTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) CloseTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.CoordinatorInterface/CloseTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/CloseTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coordinatorInterfaceClient) CommitTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) CommitTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.CoordinatorInterface/CommitTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/CommitTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coordinatorInterfaceClient) AbortTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) AbortTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.CoordinatorInterface/AbortTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/AbortTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-
-
-
-func RegisterCoordinatorInterfaceServer(s *grpc.Server, srv CoordinatorInterfaceServer) {
-	s.RegisterService(&_CoordinatorInterface_serviceDesc, srv)
+func RegisterCoordinatorServer(s *grpc.Server, srv CoordinatorServer) {
+	s.RegisterService(&_Coordinator_serviceDesc, srv)
 }
 
-func _CoordinatorInterface_OpenTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Coordinator_OpenTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorInterfaceServer).OpenTransaction(ctx, in)
+		return srv.(CoordinatorServer).OpenTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.CoordinatorInterface/OpenTransaction",
+		FullMethod: "/protos.Coordinator/OpenTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorInterfaceServer).OpenTransaction(ctx, req.(*Empty))
+		return srv.(CoordinatorServer).OpenTransaction(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoordinatorInterface_CloseTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Coordinator_CloseTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Transaction)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorInterfaceServer).CloseTransaction(ctx, in)
+		return srv.(CoordinatorServer).CloseTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.CoordinatorInterface/CloseTransaction",
+		FullMethod: "/protos.Coordinator/CloseTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorInterfaceServer).CloseTransaction(ctx, req.(*Transaction))
+		return srv.(CoordinatorServer).CloseTransaction(ctx, req.(*Transaction))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoordinatorInterface_CommitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Coordinator_CommitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorInterfaceServer).CommitTransaction(ctx, in)
+		return srv.(CoordinatorServer).CommitTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.CoordinatorInterface/CommitTransaction",
+		FullMethod: "/protos.Coordinator/CommitTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorInterfaceServer).CommitTransaction(ctx, req.(*Empty))
+		return srv.(CoordinatorServer).CommitTransaction(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoordinatorInterface_AbortTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Coordinator_AbortTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorInterfaceServer).AbortTransaction(ctx, in)
+		return srv.(CoordinatorServer).AbortTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.CoordinatorInterface/AbortTransaction",
+		FullMethod: "/protos.Coordinator/AbortTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorInterfaceServer).AbortTransaction(ctx, req.(*Empty))
+		return srv.(CoordinatorServer).AbortTransaction(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _CoordinatorInterface_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "protos.CoordinatorInterface",
-	HandlerType: (*CoordinatorInterfaceServer)(nil),
+var _Coordinator_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "protos.Coordinator",
+	HandlerType: (*CoordinatorServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "OpenTransaction",
-			Handler:    _CoordinatorInterface_OpenTransaction_Handler,
+			Handler:    _Coordinator_OpenTransaction_Handler,
 		},
 		{
 			MethodName: "CloseTransaction",
-			Handler:    _CoordinatorInterface_CloseTransaction_Handler,
+			Handler:    _Coordinator_CloseTransaction_Handler,
 		},
 		{
 			MethodName: "CommitTransaction",
-			Handler:    _CoordinatorInterface_CommitTransaction_Handler,
+			Handler:    _Coordinator_CommitTransaction_Handler,
 		},
 		{
 			MethodName: "AbortTransaction",
-			Handler:    _CoordinatorInterface_AbortTransaction_Handler,
+			Handler:    _Coordinator_AbortTransaction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

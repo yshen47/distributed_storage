@@ -1,19 +1,18 @@
 package coordinator
 
 import (
+	"context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"context"
 )
 
-// CoordinatorInterfaceServer is the server API for CoordinatorInterface service.
-type CoordinatorInterfaceServer interface {
+// CoordinatorServer is the server API for Coordinator service.
+type CoordinatorServer interface {
 	OpenTransaction(context.Context, *Empty) (*Transaction, error)
 	CloseTransaction(context.Context, *Transaction) (*Feedback, error)
 	CommitTransaction(context.Context, *Empty) (*Feedback, error)
 	AbortTransaction(context.Context, *Empty) (*Feedback, error)
 }
-
 
 type Coordinator struct {
 }
