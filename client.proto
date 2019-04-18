@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package clientServer;
+
+
+message Transaction{
+    string id = 1;
+}
+
+message TransactionId{
+    string id = 1;
+}
+
+message Status{
+    string message = 1;
+}
+
+message GetParams{
+    string server_identifier = 1;
+    string object_name = 2;
+}
+
+message SetParams {
+    string server_identifier = 1;
+    string object_name = 2;
+    string value = 3;
+}
+
+service Server {
+    rpc ClientSet(SetParams) returns (Status){}
+    rpc ClientGet(GetParams) returns (Transaction){}
+}
+
