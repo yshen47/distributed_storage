@@ -1,0 +1,18 @@
+package protos;
+import "common.proto";
+
+service Node {
+    rpc ClientSet(SetParams) returns (Feedback){}
+    rpc ClientGet(GetParams) returns (Transaction){}
+}
+
+message GetParams{
+    required string server_identifier = 1;
+    required string object_name = 2;
+}
+
+message SetParams {
+    required string server_identifier = 1;
+    required string object_name = 2;
+    required string value = 3;
+}

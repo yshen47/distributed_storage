@@ -1,8 +1,6 @@
 //protoc -I . *.proto --go_out=plugins=grpc:.
-
-syntax = "proto3";
-
 package protos;
+import "common.proto";
 
 service Coordinator {
     rpc OpenTransaction (Empty) returns (Transaction) {};
@@ -11,14 +9,5 @@ service Coordinator {
     rpc AbortTransaction(Empty) returns (Feedback) {};
 }
 
-message Transaction {
-    string id = 1;
-}
 
-message Feedback {
-    string message = 1;
-}
 
-message Empty {
-
-}

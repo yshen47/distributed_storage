@@ -1,0 +1,13 @@
+package protos;
+
+message Empty {
+
+}
+
+message Transaction {
+    required string id = 1;
+}
+
+message Feedback {
+    required string message = 1;
+}
