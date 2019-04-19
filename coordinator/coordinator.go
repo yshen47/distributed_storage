@@ -12,7 +12,7 @@ import (
 type Coordinator struct {
 }
 
-// CoordinatorServer is the server API for Coordinator service.
+// CoordinatorServer is the coordinator API for Coordinator service.
 type CoordinatorServer interface {
 	OpenTransaction(context.Context, *Empty) (*Transaction, error)
 	CloseTransaction(context.Context, *Transaction) (*Feedback, error)

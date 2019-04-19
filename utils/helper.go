@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"fmt"
 	"runtime"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ func SetupLog(name string) *os.File {
 	log.SetOutput(f)
 	//log.SetPrefix(name + " ")
 	//log.Print("#########################################")
-	//log.Println("Start server...")
+	//log.Println("Start coordinator...")
 	return f
 }
 
