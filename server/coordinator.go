@@ -4,6 +4,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"context"
+	"math/rand"
+	"time"
+	"mp3/utils"
 )
 
 // CoordinatorServer is the server API for Coordinator service.
@@ -19,7 +22,9 @@ type Coordinator struct {
 }
 
 func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OpenTransaction not implemented")
+	transactionID := utils.Concatenate(rand.Intn(1000000), int(time.Now().Unix()))
+	return &Transaction{Id:&transactionID}, nil
+
 }
 func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CloseTransaction not implemented")
