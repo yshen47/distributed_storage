@@ -23,5 +23,12 @@ func main() {
 
 	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
+
+	coordAddr := utils.Concatenate("127.0.0.1",":","6100")
+	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure())
+	coordConn := server.NewCoordinatorClient(conn)
+	utils.CheckError(error)
+
+
 }
 
