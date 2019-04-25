@@ -19,7 +19,6 @@ func main() {
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 	utils.CheckError(err)
 	nodeServer := grpc.NewServer()
-	server.RegisterNodeServer(nodeServer, &server.Node{Name:string(portNum)})
 
 	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
@@ -29,6 +28,10 @@ func main() {
 	coordConn := server.NewCoordinatorClient(conn)
 	utils.CheckError(error)
 
+	node := server.Node{}
+	node.Name = string(portNum)
+	node.CoordinatorDelegate = coordConn
+	server.RegisterNodeServer(nodeServer, &node)
 
 }
 

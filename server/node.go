@@ -8,8 +8,9 @@ import (
 
 // Node can be embedded to have forward compatible implementations.
 type Node struct {
-	Name string
-	data map[string]string
+	Name                string
+	CoordinatorDelegate CoordinatorClient
+	data                map[string]string
 }
 
 // NodeServer is the server API for Node service.
@@ -23,7 +24,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 }
 
 func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error) {
-	if *req.ServerIdentifier != n.name {
+	if *req.ServerIdentifier != n.Name {
 		return nil, status.Error(codes.InvalidArgument, "call the wrong node server")
 	}
 
