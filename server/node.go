@@ -8,14 +8,14 @@ import (
 
 // Node can be embedded to have forward compatible implementations.
 type Node struct {
-	name string
+	Name string
 	data map[string]string
 }
 
 // NodeServer is the server API for Node service.
 type NodeServer interface {
 	ClientSet(context.Context, *SetParams) (*Feedback, error)
-	ClientGet(context.Context, *GetParams) (*Transaction, error)
+	ClientGet(context.Context, *GetParams) (*Feedback, error)
 }
 
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
@@ -41,6 +41,7 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 		result = "NOT FOUND"
 		resFeedback.Message = &result
 		//TODO: tell coordinator to abort the current transaction
+
 		return resFeedback, status.Error(codes.Aborted, "not found")
 	}
 
