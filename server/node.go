@@ -8,7 +8,7 @@ import (
 
 // Node can be embedded to have forward compatible implementations.
 type Node struct {
-	data map[string]int
+	data map[string]string
 }
 
 // NodeServer is the server API for Node service.
