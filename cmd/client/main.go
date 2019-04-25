@@ -1,23 +1,33 @@
 package main
 
 import (
-	"flag"
-	"google.golang.org/grpc"
-	"log"
-	"net"
 	"fmt"
+	"google.golang.org/grpc"
+	"mp3/server"
+	"mp3/utils"
+	"context"
 )
 
 func main() {
 	serverPorts := [5]string {"5600", "5700", "5800", "5900", "6000"}
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	coordPort := "6100"
+
+
+	 // determine whether to use TLS
+
+	var serverConn [] server.NodeClient = make([] server.NodeClient, 5)
+	for i := 0; i<5; i++ {
+		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
+		conn, err := grpc.Dial(ipaddr)
+		utils.CheckError(err)
+		serverConn[i] = server.NewNodeClient(conn)
 	}
-	grpcServer := grpc.NewServer()
-	pb.RegisterRouteGuideServer(grpcServer, &routeGuideServer{})
-	... // determine whether to use TLS
-	grpcServer.Serve(lis)
+	coordAddr := utils.Concatenate("127.0.0.1",":",coordPort)
+	conn, error := grpc.Dial(coordAddr)
+	coordConn := server.NewCoordinatorClient(conn)
+	utils.CheckError(error)
+	transactionID, err := coordConn.OpenTransaction(context.Background(),nil)
+	utils.CheckError(err)
+	fmt.Println(transactionID)
 }
 
