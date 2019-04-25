@@ -3,7 +3,7 @@ import "common.proto";
 
 service Node {
     rpc ClientSet(SetParams) returns (Feedback){}
-    rpc ClientGet(GetParams) returns (Transaction){}
+    rpc ClientGet(GetParams) returns (Feedback){}
 }
 
 message GetParams{

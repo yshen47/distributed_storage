@@ -19,7 +19,7 @@ func main() {
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 	utils.CheckError(err)
 	nodeServer := grpc.NewServer()
-	server.RegisterNodeServer(nodeServer, &server.Node{})
+	server.RegisterNodeServer(nodeServer, &server.Node{portNum, make(map[string]string)})
 
 	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
