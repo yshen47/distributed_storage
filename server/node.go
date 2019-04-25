@@ -8,6 +8,7 @@ import (
 
 // Node can be embedded to have forward compatible implementations.
 type Node struct {
+	Coord	CoordinatorClient
 	name string
 	data map[string]string
 }
@@ -15,7 +16,7 @@ type Node struct {
 // NodeServer is the server API for Node service.
 type NodeServer interface {
 	ClientSet(context.Context, *SetParams) (*Feedback, error)
-	ClientGet(context.Context, *GetParams) (*Transaction, error)
+	ClientGet(context.Context, *GetParams) (*Feedback, error)
 }
 
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
