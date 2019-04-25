@@ -1,23 +1,26 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"google.golang.org/grpc"
-	"log"
 	"mp3/server"
 	"mp3/utils"
 	"net"
+	"os"
+	"strconv"
 )
 
 func main() {
-	flag.Parse()
-	lis, err := net.Listen("tcp", ":5600")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	if len(os.Args) != 2 {
+		fmt.Print("Usage: go run main.go [port] \n")
+		return
 	}
-	grpcServer := grpc.NewServer()
-	coordinator.RegisterCoordinatorServer(grpcServer, &server.Coordinator{})
-	err = grpcServer.Serve(lis)
+	portNum, err := strconv.Atoi(os.Args[1])
+	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
+	utils.CheckError(err)
+	nodeServer := grpc.NewServer()
+	server.RegisterCoordinatorServer(nodeServer, &server.Coordinator{})
+	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
 }
 
