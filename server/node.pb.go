@@ -23,6 +23,7 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type GetParams struct {
+	TransactionID 		 *string
 	ServerIdentifier     *string  `protobuf:"bytes,1,req,name=server_identifier,json=serverIdentifier" json:"server_identifier,omitempty"`
 	ObjectName           *string  `protobuf:"bytes,2,req,name=object_name,json=objectName" json:"object_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
