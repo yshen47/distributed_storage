@@ -19,6 +19,7 @@ type CoordinatorServer interface {
 
 // Coordinator can be embedded to have forward compatible implementations.
 type Coordinator struct {
+
 }
 
 func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {

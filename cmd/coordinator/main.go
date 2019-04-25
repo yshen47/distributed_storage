@@ -4,7 +4,7 @@ import (
 	"flag"
 	"google.golang.org/grpc"
 	"log"
-	"mp3/coordinator"
+	"mp3/server"
 	"mp3/utils"
 	"net"
 )
@@ -16,7 +16,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	coordinator.RegisterCoordinatorServer(grpcServer, &coordinator.Coordinator{})
+	coordinator.RegisterCoordinatorServer(grpcServer, &server.Coordinator{})
 	err = grpcServer.Serve(lis)
 	utils.CheckError(err)
 }

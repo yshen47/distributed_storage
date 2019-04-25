@@ -1,22 +1,27 @@
 package main
 
 import (
-	"flag"
-	"google.golang.org/grpc"
-	"log"
-	"net"
 	"fmt"
+	"google.golang.org/grpc"
+	"mp3/server"
+	"mp3/utils"
+	"net"
+	"os"
+	"strconv"
 )
 
 func main() {
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+	if len(os.Args) != 2 {
+		fmt.Print("Usage: go run main.go [port] \n")
+		return
 	}
-	grpcServer := grpc.NewServer()
-	pb.RegisterRouteGuideServer(grpcServer, &routeGuideServer{})
-	... // determine whether to use TLS
-	grpcServer.Serve(lis)
+	portNum, err := strconv.Atoi(os.Args[1])
+	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
+	utils.CheckError(err)
+	nodeServer := grpc.NewServer()
+	server.RegisterNodeServer(nodeServer, &server.Node{})
+
+	err = nodeServer.Serve(lis)
+	utils.CheckError(err)
 }
 
