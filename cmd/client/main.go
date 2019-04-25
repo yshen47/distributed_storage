@@ -24,7 +24,7 @@ func main() {
 	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure())
 	coordConn := server.NewCoordinatorClient(conn)
 	utils.CheckError(error)
-	transactionID, err := coordConn.OpenTransaction(context.Background(),nil)
+	transactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
 	utils.CheckError(err)
 	fmt.Println(transactionID)
 }
