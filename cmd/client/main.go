@@ -20,29 +20,45 @@ func main() {
 	var serverConn [] server.NodeClient = make([] server.NodeClient, 5)
 	for i := 0; i<5; i++ {
 		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
-		conn, err := grpc.Dial(ipaddr, grpc.WithInsecure())
+		fmt.Println("Dial server ", ipaddr)
+		conn, err := grpc.Dial(ipaddr, grpc.WithInsecure(), grpc.WithBlock())
 		utils.CheckError(err)
 		serverConn[i] = server.NewNodeClient(conn)
 	}
 	coordAddr := utils.Concatenate("127.0.0.1",":",coordPort)
-	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure())
+	fmt.Println("Dial coordinator")
+	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure(), grpc.WithBlock())
 	coordConn := server.NewCoordinatorClient(conn)
 	utils.CheckError(error)
-	transactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
+	currTransactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
 	utils.CheckError(err)
-	fmt.Println(transactionID)
+	fmt.Println(currTransactionID)
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter text: ")
-		text, _ := reader.ReadString('\n')
+		text, error := reader.ReadString('\n')
+		if error != nil {
+			fmt.Println("Invalid input. Re-enter!")
+			continue
+		}
 		words := strings.Fields(text)
+		if len(words) < 2 {
+			fmt.Println("Invalid input. Re-enter!")
+			continue
+		}
 		cmd := words[0]
 		val := strings.Split(words[1],".")
 		if cmd == "COMMIT"{
-			coordConn.CommitTransaction(context.Background(),&server.Empty{})
+			feedback, error :=coordConn.AskCommitTransaction(context.Background(),currTransactionID)
+			utils.CheckError(error)
+			fmt.Println(feedback.Message)
+			break
 		}else if cmd == "ABORT" {
-			coordConn.AbortTransaction(context.Background(),&server.Empty{})
+			feedback, error :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
+			utils.CheckError(error)
+			fmt.Println(feedback.Message)
+			break
 		}else if cmd == "SET" || cmd == "GET"{
 			if len(val) == 0 {
 				fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
@@ -52,6 +68,7 @@ func main() {
 					if cmd == "SET" {
 						setparam := server.SetParams{}
 						setparam.ObjectName = &val[1]
+						setparam.TransactionID = currTransactionID.Id
 						setparam.ServerIdentifier = &val[0]
 						setparam.Value = &words[2]
 						feedback,err := serverConn[idx].ClientSet(context.Background(),&setparam)
@@ -59,18 +76,19 @@ func main() {
 						if err != nil{
 							fmt.Println("error!", err)
 						}else{
-							fmt.Println(feedback.Message)
+							fmt.Println(*feedback.Message)
 						}
 
 					}else {
 						getparam := server.GetParams{}
+						getparam.TransactionID = currTransactionID.Id
 						getparam.ServerIdentifier = &val[0]
 						getparam.ObjectName = &val[1]
 						feedback,err := serverConn[idx].ClientGet(context.Background(),&getparam)
 						if err != nil{
 							fmt.Println("error!", err)
 						}else{
-							fmt.Println(feedback.Message)
+							fmt.Println(*feedback.Message)
 						}
 
 					}
@@ -82,5 +100,6 @@ func main() {
 			fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
 		}
 	}
+	fmt.Println("End Process.")
 }
 

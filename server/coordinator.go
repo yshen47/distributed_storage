@@ -9,15 +9,6 @@ import (
 	"time"
 )
 
-// CoordinatorServer is the server API for Coordinator service.
-type CoordinatorServer interface {
-	OpenTransaction(context.Context, *Empty) (*Transaction, error)
-	CloseTransaction(context.Context, *Transaction) (*Feedback, error)
-	CommitTransaction(context.Context, *Empty) (*Feedback, error)
-	AbortTransaction(context.Context, *Empty) (*Feedback, error)
-	ReportResourceDependency(context.Context, *ReportParam) (*Feedback, error)
-}
-
 // Coordinator can be embedded to have forward compatible implementations.
 type Coordinator struct {
 
@@ -31,12 +22,16 @@ func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transacti
 func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CloseTransaction not implemented")
 }
-func (*Coordinator) CommitTransaction(ctx context.Context, req *Empty) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
+
+func (*Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskCommitTransaction not implemented")
 }
-func (*Coordinator) AbortTransaction(ctx context.Context, req *Empty) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
+func (*Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AskAbortTransaction not implemented")
 }
-func (*Coordinator) ReportResourceDependency(ctx context.Context, req *ReportParam) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportResourceDependency not implemented")
+func (*Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TryLock not implemented")
+}
+func (*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportUnlock not implemented")
 }

@@ -24,80 +24,143 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-
-type ReportParam struct {
-	FromServer           *string  `protobuf:"bytes,1,req,name=fromServer" json:"fromServer,omitempty"`
-	ToServer             *string  `protobuf:"bytes,2,req,name=toServer" json:"toServer,omitempty"`
-	IsOn                 *bool    `protobuf:"varint,3,req,name=isOn" json:"isOn,omitempty"`
+type TryLockParam struct {
+	TransactionID        *string  `protobuf:"bytes,1,req,name=transactionID" json:"transactionID,omitempty"`
+	ServerIdentifier     *string  `protobuf:"bytes,2,req,name=server_identifier,json=serverIdentifier" json:"server_identifier,omitempty"`
+	Object               *string  `protobuf:"bytes,3,req,name=object" json:"object,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReportParam) Reset()         { *m = ReportParam{} }
-func (m *ReportParam) String() string { return proto.CompactTextString(m) }
-func (*ReportParam) ProtoMessage()    {}
-func (*ReportParam) Descriptor() ([]byte, []int) {
+func (m *TryLockParam) Reset()         { *m = TryLockParam{} }
+func (m *TryLockParam) String() string { return proto.CompactTextString(m) }
+func (*TryLockParam) ProtoMessage()    {}
+func (*TryLockParam) Descriptor() ([]byte, []int) {
 	return fileDescriptor_99e779eb11ceee19, []int{0}
 }
 
-func (m *ReportParam) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReportParam.Unmarshal(m, b)
+func (m *TryLockParam) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TryLockParam.Unmarshal(m, b)
 }
-func (m *ReportParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReportParam.Marshal(b, m, deterministic)
+func (m *TryLockParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TryLockParam.Marshal(b, m, deterministic)
 }
-func (m *ReportParam) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReportParam.Merge(m, src)
+func (m *TryLockParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TryLockParam.Merge(m, src)
 }
-func (m *ReportParam) XXX_Size() int {
-	return xxx_messageInfo_ReportParam.Size(m)
+func (m *TryLockParam) XXX_Size() int {
+	return xxx_messageInfo_TryLockParam.Size(m)
 }
-func (m *ReportParam) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReportParam.DiscardUnknown(m)
+func (m *TryLockParam) XXX_DiscardUnknown() {
+	xxx_messageInfo_TryLockParam.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReportParam proto.InternalMessageInfo
+var xxx_messageInfo_TryLockParam proto.InternalMessageInfo
 
-func (m *ReportParam) GetFromServer() string {
-	if m != nil && m.FromServer != nil {
-		return *m.FromServer
+func (m *TryLockParam) GetTransactionID() string {
+	if m != nil && m.TransactionID != nil {
+		return *m.TransactionID
 	}
 	return ""
 }
 
-func (m *ReportParam) GetToServer() string {
-	if m != nil && m.ToServer != nil {
-		return *m.ToServer
+func (m *TryLockParam) GetServerIdentifier() string {
+	if m != nil && m.ServerIdentifier != nil {
+		return *m.ServerIdentifier
 	}
 	return ""
 }
 
-func (m *ReportParam) GetIsOn() bool {
-	if m != nil && m.IsOn != nil {
-		return *m.IsOn
+func (m *TryLockParam) GetObject() string {
+	if m != nil && m.Object != nil {
+		return *m.Object
 	}
-	return false
+	return ""
+}
+
+type ReportUnLockParam struct {
+	TransactionID        *string  `protobuf:"bytes,1,req,name=transactionID" json:"transactionID,omitempty"`
+	ServerIdentifier     *string  `protobuf:"bytes,2,req,name=server_identifier,json=serverIdentifier" json:"server_identifier,omitempty"`
+	Object               *string  `protobuf:"bytes,3,req,name=object" json:"object,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReportUnLockParam) Reset()         { *m = ReportUnLockParam{} }
+func (m *ReportUnLockParam) String() string { return proto.CompactTextString(m) }
+func (*ReportUnLockParam) ProtoMessage()    {}
+func (*ReportUnLockParam) Descriptor() ([]byte, []int) {
+	return fileDescriptor_99e779eb11ceee19, []int{1}
+}
+
+func (m *ReportUnLockParam) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReportUnLockParam.Unmarshal(m, b)
+}
+func (m *ReportUnLockParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReportUnLockParam.Marshal(b, m, deterministic)
+}
+func (m *ReportUnLockParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReportUnLockParam.Merge(m, src)
+}
+func (m *ReportUnLockParam) XXX_Size() int {
+	return xxx_messageInfo_ReportUnLockParam.Size(m)
+}
+func (m *ReportUnLockParam) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReportUnLockParam.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReportUnLockParam proto.InternalMessageInfo
+
+func (m *ReportUnLockParam) GetTransactionID() string {
+	if m != nil && m.TransactionID != nil {
+		return *m.TransactionID
+	}
+	return ""
+}
+
+func (m *ReportUnLockParam) GetServerIdentifier() string {
+	if m != nil && m.ServerIdentifier != nil {
+		return *m.ServerIdentifier
+	}
+	return ""
+}
+
+func (m *ReportUnLockParam) GetObject() string {
+	if m != nil && m.Object != nil {
+		return *m.Object
+	}
+	return ""
 }
 
 func init() {
-	proto.RegisterType((*ReportParam)(nil), "protos.ReportParam")
+	proto.RegisterType((*TryLockParam)(nil), "protos.TryLockParam")
+	proto.RegisterType((*ReportUnLockParam)(nil), "protos.ReportUnLockParam")
 }
 
 func init() { proto.RegisterFile("coordinator.proto", fileDescriptor_99e779eb11ceee19) }
 
 var fileDescriptor_99e779eb11ceee19 = []byte{
-	// 155 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4c, 0xce, 0xcf, 0x2f,
-	0x4a, 0xc9, 0xcc, 0x4b, 0x2c, 0xc9, 0x2f, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x03,
-	0x53, 0xc5, 0x52, 0x3c, 0xc9, 0xf9, 0xb9, 0xb9, 0xf9, 0x79, 0x10, 0x51, 0xa3, 0x4f, 0x8c, 0x5c,
-	0xdc, 0xce, 0x08, 0xb5, 0x42, 0xe6, 0x5c, 0xfc, 0xfe, 0x05, 0xa9, 0x79, 0x21, 0x45, 0x89, 0x79,
-	0xc5, 0x89, 0xc9, 0x25, 0x99, 0xf9, 0x79, 0x42, 0xbc, 0x10, 0xa5, 0xc5, 0x7a, 0xae, 0xb9, 0x05,
-	0x25, 0x95, 0x52, 0xc2, 0x30, 0x2e, 0x92, 0x1a, 0x25, 0x06, 0x21, 0x6b, 0x2e, 0x01, 0xe7, 0x9c,
-	0xfc, 0xe2, 0x54, 0x64, 0x9d, 0xd8, 0x94, 0x4a, 0x09, 0xc0, 0x04, 0xdd, 0x52, 0x53, 0x53, 0x92,
-	0x12, 0x93, 0xb3, 0x95, 0x18, 0x84, 0xcc, 0xb8, 0x04, 0x9d, 0xf3, 0x73, 0x73, 0x33, 0x4b, 0xf0,
-	0xd8, 0x8b, 0x4d, 0x9f, 0x29, 0x97, 0x80, 0x63, 0x52, 0x7e, 0x11, 0x89, 0xda, 0x00, 0x01, 0x00,
-	0x00, 0xff, 0xff, 0x6e, 0x89, 0x88, 0x41, 0x1e, 0x01, 0x00, 0x00,
+	// 286 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x92, 0xc1, 0x4b, 0xf3, 0x40,
+	0x10, 0xc5, 0xfb, 0xf5, 0x83, 0x8a, 0x63, 0x8a, 0xc9, 0xb6, 0x48, 0xcc, 0x49, 0x82, 0x07, 0x41,
+	0xe8, 0x41, 0x0f, 0x82, 0x82, 0x12, 0xa2, 0x42, 0x41, 0x50, 0x4a, 0x3d, 0xcb, 0x66, 0xb3, 0xc2,
+	0x9a, 0xee, 0x4e, 0x98, 0x5d, 0x84, 0x5c, 0xfc, 0xaf, 0xbd, 0x8b, 0x49, 0x63, 0x5a, 0xec, 0xa9,
+	0x17, 0x4f, 0xcb, 0xbc, 0x7d, 0xbf, 0x19, 0x78, 0x33, 0x10, 0x08, 0x44, 0xca, 0x95, 0xe1, 0x0e,
+	0x69, 0x52, 0x12, 0x3a, 0x64, 0x83, 0xfa, 0xb1, 0x91, 0x27, 0x50, 0x6b, 0x34, 0x8d, 0x1a, 0x57,
+	0xe0, 0xcd, 0xa9, 0x7a, 0x40, 0x51, 0x3c, 0x71, 0xe2, 0x9a, 0x1d, 0xc3, 0xd0, 0x11, 0x37, 0x96,
+	0x0b, 0xa7, 0xd0, 0x4c, 0x6f, 0xc3, 0x7f, 0x47, 0xfd, 0x93, 0xdd, 0xd9, 0xba, 0xc8, 0x4e, 0x21,
+	0xb0, 0x92, 0xde, 0x25, 0xbd, 0xa8, 0x5c, 0x1a, 0xa7, 0x5e, 0x95, 0xa4, 0xb0, 0x5f, 0x3b, 0xfd,
+	0xe6, 0x63, 0xfa, 0xa3, 0xb3, 0x03, 0x18, 0x60, 0xf6, 0x26, 0x85, 0x0b, 0xff, 0xd7, 0x8e, 0x65,
+	0x15, 0x7f, 0x40, 0x30, 0x93, 0x25, 0x92, 0x7b, 0x36, 0x7f, 0x31, 0xff, 0xec, 0xb3, 0x0f, 0x7b,
+	0x69, 0x17, 0x13, 0xbb, 0x80, 0xfd, 0xc7, 0x52, 0x9a, 0x79, 0x37, 0x89, 0x0d, 0x9b, 0x94, 0xec,
+	0xe4, 0x4e, 0x97, 0xae, 0x8a, 0x46, 0x6d, 0xb9, 0xe2, 0x89, 0x7b, 0xec, 0x0a, 0xfc, 0x74, 0x81,
+	0x56, 0xae, 0x92, 0x9b, 0xac, 0x91, 0xdf, 0x8a, 0xf7, 0x52, 0xe6, 0x19, 0x17, 0x45, 0xdc, 0x63,
+	0x37, 0x30, 0x4e, 0x6c, 0x91, 0xa2, 0xd6, 0xca, 0x6d, 0xd5, 0xe0, 0x1a, 0x46, 0x89, 0x2d, 0x92,
+	0x0c, 0x69, 0x3b, 0xfe, 0x1c, 0x76, 0x96, 0x17, 0xc0, 0xc6, 0x1d, 0xd3, 0x9d, 0xc4, 0x46, 0xe8,
+	0x12, 0xbc, 0x76, 0x77, 0x8b, 0x6f, 0xf2, 0xb0, 0xf5, 0xfc, 0xda, 0x68, 0xb4, 0x9e, 0x61, 0xdc,
+	0xfb, 0x0a, 0x00, 0x00, 0xff, 0xff, 0x55, 0xd8, 0xea, 0x5c, 0x9c, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -114,9 +177,10 @@ const _ = grpc.SupportPackageIsVersion4
 type CoordinatorClient interface {
 	OpenTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Transaction, error)
 	CloseTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error)
-	CommitTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error)
-	AbortTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error)
-	ReportResourceDependency(ctx context.Context, in *ReportParam, opts ...grpc.CallOption) (*Feedback, error)
+	AskCommitTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error)
+	AskAbortTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error)
+	TryLock(ctx context.Context, in *TryLockParam, opts ...grpc.CallOption) (*Feedback, error)
+	ReportUnlock(ctx context.Context, in *ReportUnLockParam, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type coordinatorClient struct {
@@ -145,32 +209,74 @@ func (c *coordinatorClient) CloseTransaction(ctx context.Context, in *Transactio
 	return out, nil
 }
 
-func (c *coordinatorClient) CommitTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) AskCommitTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.Coordinator/CommitTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/AskCommitTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coordinatorClient) AbortTransaction(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) AskAbortTransaction(ctx context.Context, in *Transaction, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.Coordinator/AbortTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/AskAbortTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coordinatorClient) ReportResourceDependency(ctx context.Context, in *ReportParam, opts ...grpc.CallOption) (*Feedback, error) {
+func (c *coordinatorClient) TryLock(ctx context.Context, in *TryLockParam, opts ...grpc.CallOption) (*Feedback, error) {
 	out := new(Feedback)
-	err := c.cc.Invoke(ctx, "/protos.Coordinator/ReportResourceDependency", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/TryLock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
+
+func (c *coordinatorClient) ReportUnlock(ctx context.Context, in *ReportUnLockParam, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/protos.Coordinator/ReportUnlock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CoordinatorServer is the server API for Coordinator service.
+type CoordinatorServer interface {
+	OpenTransaction(context.Context, *Empty) (*Transaction, error)
+	CloseTransaction(context.Context, *Transaction) (*Feedback, error)
+	AskCommitTransaction(context.Context, *Transaction) (*Feedback, error)
+	AskAbortTransaction(context.Context, *Transaction) (*Feedback, error)
+	TryLock(context.Context, *TryLockParam) (*Feedback, error)
+	ReportUnlock(context.Context, *ReportUnLockParam) (*Empty, error)
+}
+
+//// UnimplementedCoordinatorServer can be embedded to have forward compatible implementations.
+//type UnimplementedCoordinatorServer struct {
+//}
+//
+//func (*UnimplementedCoordinatorServer) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method OpenTransaction not implemented")
+//}
+//func (*UnimplementedCoordinatorServer) CloseTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method CloseTransaction not implemented")
+//}
+//func (*UnimplementedCoordinatorServer) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method AskCommitTransaction not implemented")
+//}
+//func (*UnimplementedCoordinatorServer) AskAbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method AskAbortTransaction not implemented")
+//}
+//func (*UnimplementedCoordinatorServer) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method TryLock not implemented")
+//}
+//func (*UnimplementedCoordinatorServer) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
+//	return nil, status.Errorf(codes.Unimplemented, "method ReportUnlock not implemented")
+//}
 
 func RegisterCoordinatorServer(s *grpc.Server, srv CoordinatorServer) {
 	s.RegisterService(&_Coordinator_serviceDesc, srv)
@@ -212,56 +318,74 @@ func _Coordinator_CloseTransaction_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Coordinator_CommitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+func _Coordinator_AskCommitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Transaction)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorServer).CommitTransaction(ctx, in)
+		return srv.(CoordinatorServer).AskCommitTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.Coordinator/CommitTransaction",
+		FullMethod: "/protos.Coordinator/AskCommitTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorServer).CommitTransaction(ctx, req.(*Empty))
+		return srv.(CoordinatorServer).AskCommitTransaction(ctx, req.(*Transaction))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Coordinator_AbortTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+func _Coordinator_AskAbortTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Transaction)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorServer).AbortTransaction(ctx, in)
+		return srv.(CoordinatorServer).AskAbortTransaction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.Coordinator/AbortTransaction",
+		FullMethod: "/protos.Coordinator/AskAbortTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorServer).AbortTransaction(ctx, req.(*Empty))
+		return srv.(CoordinatorServer).AskAbortTransaction(ctx, req.(*Transaction))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Coordinator_ReportResourceDependency_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReportParam)
+func _Coordinator_TryLock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TryLockParam)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorServer).ReportResourceDependency(ctx, in)
+		return srv.(CoordinatorServer).TryLock(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.Coordinator/ReportResourceDependency",
+		FullMethod: "/protos.Coordinator/TryLock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorServer).ReportResourceDependency(ctx, req.(*ReportParam))
+		return srv.(CoordinatorServer).TryLock(ctx, req.(*TryLockParam))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Coordinator_ReportUnlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportUnLockParam)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorServer).ReportUnlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protos.Coordinator/ReportUnlock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorServer).ReportUnlock(ctx, req.(*ReportUnLockParam))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -279,16 +403,20 @@ var _Coordinator_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Coordinator_CloseTransaction_Handler,
 		},
 		{
-			MethodName: "CommitTransaction",
-			Handler:    _Coordinator_CommitTransaction_Handler,
+			MethodName: "AskCommitTransaction",
+			Handler:    _Coordinator_AskCommitTransaction_Handler,
 		},
 		{
-			MethodName: "AbortTransaction",
-			Handler:    _Coordinator_AbortTransaction_Handler,
+			MethodName: "AskAbortTransaction",
+			Handler:    _Coordinator_AskAbortTransaction_Handler,
 		},
 		{
-			MethodName: "ReportResourceDependency",
-			Handler:    _Coordinator_ReportResourceDependency_Handler,
+			MethodName: "TryLock",
+			Handler:    _Coordinator_TryLock_Handler,
+		},
+		{
+			MethodName: "ReportUnlock",
+			Handler:    _Coordinator_ReportUnlock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

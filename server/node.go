@@ -25,6 +25,8 @@ type LockTuple struct {
 type NodeServer interface {
 	ClientSet(context.Context, *SetParams) (*Feedback, error)
 	ClientGet(context.Context, *GetParams) (*Feedback, error)
+	CommitTransaction(context.Context, *Transaction) (*Feedback, error)
+	AbortTransaction(context.Context, *Transaction) (*Feedback, error)
 }
 
 func (n *Node) Init() {
@@ -85,6 +87,14 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	val, ok := n.data[*req.ObjectName]
 	resFeedback.Message = &val
 	return resFeedback, nil
+}
+
+
+func (*Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
+}
+func (*Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
 }
 
 func (n *Node) RLock(objectName string) {
