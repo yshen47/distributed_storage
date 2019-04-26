@@ -27,5 +27,7 @@ func main() {
 	transactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
 	utils.CheckError(err)
 	fmt.Println(transactionID)
+
+
 }
 

@@ -7,7 +7,12 @@ service Coordinator {
     rpc CloseTransaction(Transaction) returns (Feedback) {};
     rpc CommitTransaction(Empty) returns (Feedback) {};
     rpc AbortTransaction(Empty) returns (Feedback) {};
+    rpc ReportResourceDependency(ReportParam) returns (Feedback) {};
 }
 
-
+message ReportParam {
+    required string fromServer = 1;
+    required string toServer = 2;
+    required bool   isOn = 3;
+}
 

@@ -1,12 +1,12 @@
 package server
 
 import (
+	"context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"context"
 	"math/rand"
-	"time"
 	"mp3/utils"
+	"time"
 )
 
 // CoordinatorServer is the server API for Coordinator service.
@@ -15,6 +15,7 @@ type CoordinatorServer interface {
 	CloseTransaction(context.Context, *Transaction) (*Feedback, error)
 	CommitTransaction(context.Context, *Empty) (*Feedback, error)
 	AbortTransaction(context.Context, *Empty) (*Feedback, error)
+	ReportResourceDependency(context.Context, *ReportParam) (*Feedback, error)
 }
 
 // Coordinator can be embedded to have forward compatible implementations.
@@ -35,4 +36,7 @@ func (*Coordinator) CommitTransaction(ctx context.Context, req *Empty) (*Feedbac
 }
 func (*Coordinator) AbortTransaction(ctx context.Context, req *Empty) (*Feedback, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
+}
+func (*Coordinator) ReportResourceDependency(ctx context.Context, req *ReportParam) (*Feedback, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportResourceDependency not implemented")
 }
