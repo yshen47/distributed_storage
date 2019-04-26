@@ -27,6 +27,11 @@ type NodeServer interface {
 	ClientGet(context.Context, *GetParams) (*Feedback, error)
 }
 
+func (n *Node) Init() {
+	n.lockMap = make(map[string]*LockTuple)
+	n.data = make(map[string]string)
+}
+
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
 	if *req.ServerIdentifier != n.Name {
 		return nil, status.Error(codes.InvalidArgument, "Called the wrong node server")

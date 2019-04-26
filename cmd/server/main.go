@@ -23,6 +23,7 @@ func main() {
 	utils.CheckError(error)
 
 	node := server.Node{}
+	node.Init()
 	node.Name = strconv.Itoa(portNum)
 	node.CoordinatorDelegate = coordConn
 
