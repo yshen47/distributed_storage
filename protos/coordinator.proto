@@ -5,14 +5,20 @@ import "common.proto";
 service Coordinator {
     rpc OpenTransaction (Empty) returns (Transaction) {};
     rpc CloseTransaction(Transaction) returns (Feedback) {};
-    rpc CommitTransaction(Empty) returns (Feedback) {};
-    rpc AbortTransaction(Empty) returns (Feedback) {};
-    rpc ReportResourceDependency(ReportParam) returns (Feedback) {};
+    rpc AskCommitTransaction(Transaction) returns (Feedback) {};
+    rpc AskAbortTransaction(Transaction) returns (Feedback) {};
+    rpc TryLock(TryLockParam) returns (Feedback) {}; //use feedback to indicate if we proceed or abort the transaction
+    rpc ReportUnlock(ReportUnLockParam) returns (Empty){};
 }
 
-message ReportParam {
-    required string fromServer = 1;
-    required string toServer = 2;
-    required bool   isOn = 3;
+message TryLockParam {
+    required string transactionID = 1;
+    required string server_identifier = 2;
+    required string object = 3;
 }
 
+message ReportUnLockParam {
+    required string transactionID = 1;
+    required string server_identifier = 2;
+    required string object = 3;
+}

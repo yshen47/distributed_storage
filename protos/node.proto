@@ -4,15 +4,19 @@ import "common.proto";
 service Node {
     rpc ClientSet(SetParams) returns (Feedback){}
     rpc ClientGet(GetParams) returns (Feedback){}
+    rpc CommitTransaction(Transaction) returns (Feedback) {}
+    rpc AbortTransaction(Transaction) returns (Feedback) {}
 }
 
 message GetParams{
-    required string server_identifier = 1;
-    required string object_name = 2;
+    required string transactionID = 1;
+    required string server_identifier = 2;
+    required string object_name = 3;
 }
 
 message SetParams {
-    required string server_identifier = 1;
-    required string object_name = 2;
-    required string value = 3;
+    required string transactionID = 1;
+    required string server_identifier = 2;
+    required string object_name = 3;
+    required string value = 4;
 }
