@@ -16,12 +16,6 @@ func main() {
 		return
 	}
 	portNum, err := strconv.Atoi(os.Args[1])
-	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
-	utils.CheckError(err)
-	nodeServer := grpc.NewServer()
-
-	err = nodeServer.Serve(lis)
-	utils.CheckError(err)
 
 	coordAddr := utils.Concatenate("127.0.0.1",":","6100")
 	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure())
@@ -29,9 +23,20 @@ func main() {
 	utils.CheckError(error)
 
 	node := server.Node{}
-	node.Name = string(portNum)
+	node.Name = strconv.Itoa(portNum)
 	node.CoordinatorDelegate = coordConn
+
+	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
+	utils.CheckError(err)
+	nodeServer := grpc.NewServer()
 	server.RegisterNodeServer(nodeServer, &node)
+	err = nodeServer.Serve(lis)
+	utils.CheckError(err)
+
+
+
+
+
 
 }
 

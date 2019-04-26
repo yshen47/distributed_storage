@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
+	"context"
 	"fmt"
 	"google.golang.org/grpc"
 	"mp3/server"
 	"mp3/utils"
-	"context"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -28,6 +32,55 @@ func main() {
 	utils.CheckError(err)
 	fmt.Println(transactionID)
 
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter text: ")
+		text, _ := reader.ReadString('\n')
+		words := strings.Fields(text)
+		cmd := words[0]
+		val := strings.Split(words[1],".")
+		if cmd == "COMMIT"{
+			coordConn.CommitTransaction(context.Background(),&server.Empty{})
+		}else if cmd == "ABORT" {
+			coordConn.AbortTransaction(context.Background(),&server.Empty{})
+		}else if cmd == "SET" || cmd == "GET"{
+			if len(val) == 0 {
+				fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
+			}
+			if temp, ok := strconv.Atoi(val[0]); ok==nil{
+				if idx := (temp-5600)/100; idx < 5 {
+					if cmd == "SET" {
+						setparam := server.SetParams{}
+						setparam.ObjectName = &val[1]
+						setparam.ServerIdentifier = &val[0]
+						setparam.Value = &words[2]
+						feedback,err := serverConn[idx].ClientSet(context.Background(),&setparam)
+						fmt.Println("idx = ",idx)
+						if err != nil{
+							fmt.Println("error!", err)
+						}else{
+							fmt.Println(feedback.Message)
+						}
 
+					}else {
+						getparam := server.GetParams{}
+						getparam.ServerIdentifier = &val[0]
+						getparam.ObjectName = &val[1]
+						feedback,err := serverConn[idx].ClientGet(context.Background(),&getparam)
+						if err != nil{
+							fmt.Println("error!", err)
+						}else{
+							fmt.Println(feedback.Message)
+						}
+
+					}
+				}
+			}else{
+				fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
+			}
+		}else {
+			fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
+		}
+	}
 }
 
