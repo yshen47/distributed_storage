@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"context"
@@ -20,7 +21,15 @@ type NodeServer interface {
 }
 
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClientSet not implemented")
+	if *req.ServerIdentifier != n.Name {
+		name := fmt.Sprintf("request is %s, myname is %s",*req.ServerIdentifier,n.Name)
+		return nil, status.Error(codes.InvalidArgument, name)
+	}
+	n.data[*req.ObjectName] = *req.Value
+	resFeedback := &Feedback{}
+	res := "OK"
+	resFeedback.Message = &res
+	return resFeedback, nil
 }
 
 func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error) {

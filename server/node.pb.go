@@ -163,7 +163,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type NodeClient interface {
 	ClientSet(ctx context.Context, in *SetParams, opts ...grpc.CallOption) (*Feedback, error)
-	ClientGet(ctx context.Context, in *GetParams, opts ...grpc.CallOption) (*Transaction, error)
+	ClientGet(ctx context.Context, in *GetParams, opts ...grpc.CallOption) (*Feedback, error)
 }
 
 type nodeClient struct {
@@ -183,8 +183,8 @@ func (c *nodeClient) ClientSet(ctx context.Context, in *SetParams, opts ...grpc.
 	return out, nil
 }
 
-func (c *nodeClient) ClientGet(ctx context.Context, in *GetParams, opts ...grpc.CallOption) (*Transaction, error) {
-	out := new(Transaction)
+func (c *nodeClient) ClientGet(ctx context.Context, in *GetParams, opts ...grpc.CallOption) (*Feedback, error) {
+	out := new(Feedback)
 	err := c.cc.Invoke(ctx, "/protos.Node/ClientGet", in, out, opts...)
 	if err != nil {
 		return nil, err
