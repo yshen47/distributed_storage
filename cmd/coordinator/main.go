@@ -27,7 +27,7 @@ func main() {
 
 func dial(){
 	serverConn := make([] server.NodeClient, 5)
-	serverPorts := [5]string {"5600", "5700", "5800", "5900", "6000"}
+	serverPorts := [5]string {"5600", "5700", "5800", "6200", "6000"}
 	for i := 0; i<5; i++ {
 		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
 		fmt.Println("Dial ", ipaddr)

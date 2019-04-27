@@ -49,6 +49,6 @@ func (*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*
 	return nil, status.Errorf(codes.Unimplemented, "method ReportUnlock not implemented")
 }
 
-func (c *Coordinator) checkDeadlock() bool {
-
-}
+//func (c *Coordinator) checkDeadlock() bool {
+//
+//}

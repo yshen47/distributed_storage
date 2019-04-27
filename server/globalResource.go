@@ -114,7 +114,7 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string) {
 		default:
 			resource, ok := d.items[resourceKey]
 			if ok {
-				lockType := resource[-1]
+				lockType := resource[len(resource)-1]
 				if lockType == 'R' && hangingLockType == "R" {
 					continueFlag = false
 				}

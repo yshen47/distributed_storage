@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	serverPorts := [5]string {"5600", "5700", "5800", "5900", "6000"}
+	serverPorts := [5]string {"5600", "5700", "5800", "6200", "6000"}
 	coordPort := "6100"
 
 	var serverConn [] server.NodeClient = make([] server.NodeClient, 5)
