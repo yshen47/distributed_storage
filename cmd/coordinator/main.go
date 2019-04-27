@@ -15,7 +15,9 @@ func main() {
 	utils.CheckError(err)
 	nodeServer := grpc.NewServer()
 	go dial()
-	server.RegisterCoordinatorServer(nodeServer, &server.Coordinator{})
+	coordinator := server.Coordinator{}
+	coordinator.Init()
+	server.RegisterCoordinatorServer(nodeServer, &coordinator)
 	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
 
