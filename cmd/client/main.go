@@ -32,7 +32,7 @@ func main() {
 	utils.CheckError(error)
 	currTransactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
 	utils.CheckError(err)
-	fmt.Println(currTransactionID)
+
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
@@ -43,23 +43,26 @@ func main() {
 			continue
 		}
 		words := strings.Fields(text)
-		if len(words) < 2 {
+		if len(words) < 1 {
 			fmt.Println("Invalid input. Re-enter!")
 			continue
 		}
 		cmd := words[0]
-		val := strings.Split(words[1],".")
+
 		if cmd == "COMMIT"{
 			feedback, error :=coordConn.AskCommitTransaction(context.Background(),currTransactionID)
 			utils.CheckError(error)
 			fmt.Println(feedback.Message)
 			break
+		}else if cmd == "BEGIN"{
+			fmt.Println(currTransactionID)
 		}else if cmd == "ABORT" {
 			feedback, error :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
 			utils.CheckError(error)
 			fmt.Println(feedback.Message)
 			break
 		}else if cmd == "SET" || cmd == "GET"{
+			val := strings.Split(words[1],".")
 			if len(val) == 0 {
 				fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
 			}
