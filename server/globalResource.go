@@ -112,27 +112,22 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, co
 		if d.Has(resourceKey) {
 			lockType := d.Get(resourceKey)[1]
 			if lockType == "R" && hangingLockType == "R" {
+				fmt.Println("break 115")
 				break
 			}
-			fmt.Println("ResourceMap trylockat:117")
 		} else {
-			fmt.Println("BREAK!! 117")
+			fmt.Println("Break 119")
 			break
 		}
 		if coordinatorDelegate.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
-			fmt.Println("ResourceMap trylockat:122")
 			if coordinatorDelegate.CheckDeadlock(*param.TransactionID) {
 				fmt.Println("Abort ", *param.TransactionID)
 				return false
 			}
 		}
-		fmt.Println("ResourceMap trylockat:126")
 		time.Sleep(100*time.Millisecond)
 	}
-	fmt.Println("ResourceMap trylockat:128")
 	d.Set(param)
-	fmt.Println("ResourceMap trylockat:133")
 	coordinatorDelegate.DeleteDependency(*param.TransactionID, d.Get(resourceKey)[0])
-	fmt.Println("ResourceMap trylockat:135")
 	return true
 }

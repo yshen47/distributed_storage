@@ -43,6 +43,7 @@ func (*Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
 	fmt.Println("received new trylock request with param: ", *req)
+	time.Sleep(10*time.Second)
 	resourceKey := c.globalResources.ConstructKey(*req)
 	if c.globalResources.Has(resourceKey) {
 		origValues := c.globalResources.Get(resourceKey)
@@ -52,9 +53,12 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 	fmt.Println("line 51")
 	if c.globalResources.TryLockAt(*req, c.abortChannel, c) {
 		message := "Success"
+		fmt.Println("Got the lock with param: ", *req.TransactionID)
+		time.Sleep(10 * time.Second)
 		return &Feedback{Message:&message}, nil
 	} else {
 		message := "Abort"
+		fmt.Println("Abort the lock with param: ", *req)
 		return &Feedback{Message:&message}, status.Errorf(codes.Aborted, "transaction aborted, found deadlock!")
 	}
 
@@ -62,11 +66,13 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 
 func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
 	c.globalResources.Delete(*req)
+	fmt.Println("Unlock with param: ", *req.TransactionID)
 	return &Empty{}, nil
 }
 
 func (c *Coordinator) AddDependency(fromA string, toB string) bool{
 	if !(c.transactionDependency.Has(fromA) && c.transactionDependency.Get(fromA) == toB) {
+		fmt.Println("New Dependency: ", fromA, " depends on ", toB)
 		c.transactionDependency.Set(fromA, toB)
 		return true
 	}
@@ -74,6 +80,7 @@ func (c *Coordinator) AddDependency(fromA string, toB string) bool{
 }
 
 func (c *Coordinator) DeleteDependency(fromA string, toB string) {
+	fmt.Println("Remove Dependency: ", fromA, " depends on ", toB)
 	if c.transactionDependency.Get(fromA) == toB {
 		c.transactionDependency.Delete(fromA)
 	}
