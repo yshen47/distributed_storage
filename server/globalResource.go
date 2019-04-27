@@ -3,7 +3,6 @@
 // see https://github.com/cheekybits/genny
 
 package server
-
 import (
 	"mp3/utils"
 	"strings"
@@ -12,7 +11,12 @@ import (
 	"time"
 )
 
-// cat generic_ccmap.go | genny gen "String=string String=*blockchain.Transaction" > [targetName].go
+// cat generic_ccmap.go | genny gen "Key=string Value=*blockchain.Transaction" > [targetName].go
+type CoordinatorDelegate interface{
+	AddDependency(fromA string, toB string) bool
+	DeleteDependency(fromA string, toB string)
+	CheckDeadlock(initTransactionID string) bool
+}
 
 // StringDictionary the set of Items
 type ResourceMap struct {
@@ -25,7 +29,7 @@ func (d *ResourceMap) Set(param TryLockParam) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	resourceKey := d.ConstructKey(param)
-	resourceVal := utils.Concatenate(param.TransactionID, "_", param.LockType)
+	resourceVal := utils.Concatenate(*param.TransactionID, "_", *param.LockType)
 	if d.items == nil {
 		d.items = make(map[string]string)
 	}
@@ -33,12 +37,14 @@ func (d *ResourceMap) Set(param TryLockParam) {
 }
 
 // Delete removes a value from the ccmap, given its key
-func (d *ResourceMap) Delete(k string) bool {
+func (d *ResourceMap) Delete(param ReportUnLockParam) bool {
 	d.lock.Lock()
 	defer d.lock.Unlock()
-	_, ok := d.items[k]
+
+	resourceKey := utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
+	_, ok := d.items[resourceKey]
 	if ok {
-		delete(d.items, k)
+		delete(d.items, resourceKey)
 	}
 	return ok
 }
@@ -95,38 +101,38 @@ func (d *ResourceMap) GetKys() []string {
 //}
 
 func (d *ResourceMap) ConstructKey(param TryLockParam) string {
-	return utils.Concatenate(param.ServerIdentifier, "_", param.Object)
+	return utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
 }
 
-func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string) {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
+func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinatorDelegate CoordinatorDelegate) bool {
+	fmt.Println("ResourceMap trylockat")
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
 	for {
-		continueFlag := true
-		select {
-		case transactionID := <- abortChannel:
-			if transactionID == *param.TransactionID {
-				fmt.Println("Abort ", transactionID)
-				return
+		if d.Has(resourceKey) {
+			lockType := d.Get(resourceKey)[1]
+			if lockType == "R" && hangingLockType == "R" {
+				break
 			}
-		default:
-			resource, ok := d.items[resourceKey]
-			if ok {
-				lockType := resource[-1]
-				if lockType == 'R' && hangingLockType == "R" {
-					continueFlag = false
-				}
-			} else {
-				continueFlag = false
-			}
-		}
-		if !continueFlag {
+			fmt.Println("ResourceMap trylockat:117")
+		} else {
+			fmt.Println("BREAK!! 117")
 			break
 		}
+		if coordinatorDelegate.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
+			fmt.Println("ResourceMap trylockat:122")
+			if coordinatorDelegate.CheckDeadlock(*param.TransactionID) {
+				fmt.Println("Abort ", *param.TransactionID)
+				return false
+			}
+		}
+		fmt.Println("ResourceMap trylockat:126")
 		time.Sleep(100*time.Millisecond)
 	}
+	fmt.Println("ResourceMap trylockat:128")
 	d.Set(param)
+	fmt.Println("ResourceMap trylockat:133")
+	coordinatorDelegate.DeleteDependency(*param.TransactionID, d.Get(resourceKey)[0])
+	fmt.Println("ResourceMap trylockat:135")
+	return true
 }
-
