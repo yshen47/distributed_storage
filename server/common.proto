@@ -1,8 +1,5 @@
-package protos;
-
-message Empty {
-
-}
+syntax = "proto2";
+package server;
 
 message Transaction {
     required string id = 1;
@@ -11,4 +8,9 @@ message Transaction {
 message Feedback {
     required string message = 1;
 }
+
+message Empty {
+
+}
+
 

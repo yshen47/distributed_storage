@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"context"
+	"mp3/utils"
 	"sync"
 )
 
@@ -51,8 +52,8 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	}
 	n.lockMapLock.Unlock()
 
-	n.WLock(*req.ObjectName)
-	defer n.WUnLock(*req.ObjectName)
+	n.WLock(*req.ObjectName, *req.TransactionID)
+	defer n.WUnLock(*req.ObjectName, *req.TransactionID)
 
 	n.data[*req.ObjectName] = *req.Value
 	resFeedback := &Feedback{}
@@ -80,8 +81,8 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.lockMapLock.RUnlock()
 
 
-	n.RLock(*req.ObjectName)
-	defer n.RUnLock(*req.ObjectName)
+	n.RLock(*req.ObjectName, *req.TransactionID)
+	defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
 	resFeedback := &Feedback{}
 	val, ok := n.data[*req.ObjectName]
@@ -93,26 +94,65 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 func (*Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
 }
-func (*Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	n.abortTransaction(*req.Id)
 	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
 }
 
-func (n *Node) RLock(objectName string) {
+func (*Node) abortTransaction(transactionID string) {
+
+}
+
+func (n *Node) RLock(objectName string, transactionID string) {
 	fmt.Println("RLock on ", objectName)
+	tryLockParam := TryLockParam{}
+	tryLockParam.TransactionID = &transactionID
+	tryLockParam.ServerIdentifier = &n.Name
+	tryLockParam.Object = &objectName
+	lockType := "R"
+	tryLockParam.LockType = &lockType
+	feedback, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
+	utils.CheckError(err)
+	if *feedback.Message == "Abort" {
+		n.abortTransaction(transactionID)
+	}
 	n.lockMap[objectName].mutex.RLock()
 }
 
-func (n *Node) RUnLock(objectName string) {
+func (n *Node) RUnLock(objectName string, transactionID string) {
 	fmt.Println("RUnLock on ", objectName)
+	reportUnlockParam := ReportUnLockParam{}
+	reportUnlockParam.Object = &objectName
+	reportUnlockParam.ServerIdentifier = &n.Name
+	reportUnlockParam.TransactionID = &transactionID
+	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
+	utils.CheckError(err)
 	n.lockMap[objectName].mutex.RUnlock()
 }
 
-func (n *Node) WLock(objectName string) {
+func (n *Node) WLock(objectName string, transactionID string) {
 	fmt.Println("WLock on ", objectName)
+	tryLockParam := TryLockParam{}
+	tryLockParam.TransactionID = &transactionID
+	tryLockParam.ServerIdentifier = &n.Name
+	lockType := "W"
+	tryLockParam.LockType = &lockType
+	tryLockParam.Object = &objectName
+	feedback, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
+	utils.CheckError(err)
+	if *feedback.Message == "Abort" {
+		n.abortTransaction(transactionID)
+	}
 	n.lockMap[objectName].mutex.Lock()
 }
 
-func (n *Node) WUnLock(objectName string) {
+func (n *Node) WUnLock(objectName string, transactionID string) {
 	fmt.Println("WUnLock on ", objectName)
+	reportUnlockParam := ReportUnLockParam{}
+	reportUnlockParam.Object = &objectName
+	reportUnlockParam.ServerIdentifier = &n.Name
+	reportUnlockParam.TransactionID = &transactionID
+	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
+	utils.CheckError(err)
 	n.lockMap[objectName].mutex.Unlock()
 }

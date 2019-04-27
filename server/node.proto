@@ -1,4 +1,5 @@
-package protos;
+syntax = "proto2";
+package server;
 import "common.proto";
 
 service Node {

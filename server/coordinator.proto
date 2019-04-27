@@ -1,5 +1,6 @@
 //protoc -I . *.proto --go_out=plugins=grpc:.
-package protos;
+syntax = "proto2";
+package server;
 import "common.proto";
 
 service Coordinator {
@@ -15,10 +16,12 @@ message TryLockParam {
     required string transactionID = 1;
     required string server_identifier = 2;
     required string object = 3;
+    required string lockType = 4;
 }
 
 message ReportUnLockParam {
     required string transactionID = 1;
     required string server_identifier = 2;
     required string object = 3;
+    required string lockType = 4;
 }
