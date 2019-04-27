@@ -64,10 +64,15 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		n.lockMap[*req.ObjectName].transactionID = *req.TransactionID
 	}
 	n.lockMapLock.Unlock()
-
-	n.WLock(*req.ObjectName, *req.TransactionID)
+	isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 	defer n.WUnLock(*req.ObjectName, *req.TransactionID)
 
+	if !isSuccessful {
+		resFeedback := &Feedback{}
+		result := "ABORTED"
+		resFeedback.Message = &result
+		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
+	}
 
 	if (len(n.uncommittedHistory) == 0){
 		currentState := TransactionHistory{}
@@ -92,10 +97,10 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
 	}
 
-
 	resFeedback := &Feedback{}
 	result := "OK"
 	resFeedback.Message = &result
+	fmt.Println("About to return 67")
 	return resFeedback, nil
 }
 
@@ -168,7 +173,7 @@ func (n *Node) abortTransaction(transactionID string) {
 	n.uncommittedHistory = nil
 }
 
-func (n *Node) RLock(objectName string, transactionID string) {
+func (n *Node) RLock(objectName string, transactionID string) bool{
 	fmt.Println("RLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
@@ -180,8 +185,10 @@ func (n *Node) RLock(objectName string, transactionID string) {
 	utils.CheckError(err)
 	if *feedback.Message == "Abort" {
 		n.abortTransaction(transactionID)
+		return false
 	}
 	n.lockMap[objectName].mutex.RLock()
+	return true
 }
 
 func (n *Node) RUnLock(objectName string, transactionID string) {
@@ -190,12 +197,14 @@ func (n *Node) RUnLock(objectName string, transactionID string) {
 	reportUnlockParam.Object = &objectName
 	reportUnlockParam.ServerIdentifier = &n.Name
 	reportUnlockParam.TransactionID = &transactionID
+	lockType := "R"
+	reportUnlockParam.LockType = &lockType
 	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
 	utils.CheckError(err)
 	n.lockMap[objectName].mutex.RUnlock()
 }
 
-func (n *Node) WLock(objectName string, transactionID string) {
+func (n *Node) WLock(objectName string, transactionID string) bool{
 	fmt.Println("WLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
@@ -207,8 +216,10 @@ func (n *Node) WLock(objectName string, transactionID string) {
 	utils.CheckError(err)
 	if *feedback.Message == "Abort" {
 		n.abortTransaction(transactionID)
+		return false
 	}
 	n.lockMap[objectName].mutex.Lock()
+	return true
 }
 
 func (n *Node) WUnLock(objectName string, transactionID string) {
@@ -217,7 +228,8 @@ func (n *Node) WUnLock(objectName string, transactionID string) {
 	reportUnlockParam.Object = &objectName
 	reportUnlockParam.ServerIdentifier = &n.Name
 	reportUnlockParam.TransactionID = &transactionID
-	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
-	utils.CheckError(err)
+	lockType := "W"
+	reportUnlockParam.LockType = &lockType
+	n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
 	n.lockMap[objectName].mutex.Unlock()
 }
