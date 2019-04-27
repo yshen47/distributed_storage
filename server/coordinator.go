@@ -48,9 +48,7 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 	if c.globalResources.Has(resourceKey) {
 		origValues := c.globalResources.Get(resourceKey)
 		c.transactionDependency.Set(*req.TransactionID, origValues[0])
-		fmt.Println("line 50")
 	}
-	fmt.Println("line 51")
 	if c.globalResources.TryLockAt(*req, c.abortChannel, c) {
 		message := "Success"
 		fmt.Println("Got the lock with param: ", *req.TransactionID)
@@ -79,11 +77,10 @@ func (c *Coordinator) AddDependency(fromA string, toB string) bool{
 	return false
 }
 
-func (c *Coordinator) DeleteDependency(fromA string, toB string) {
-	fmt.Println("Remove Dependency: ", fromA, " depends on ", toB)
-	if c.transactionDependency.Get(fromA) == toB {
-		c.transactionDependency.Delete(fromA)
-	}
+func (c *Coordinator) DeleteDependency(fromA string) {
+	fmt.Println("Delete dependency: " ,fromA, " on ", c.transactionDependency.Get(fromA))
+	c.transactionDependency.Delete(fromA)
+	fmt.Println(c.transactionDependency.items)
 }
 
 func (c *Coordinator) CheckDeadlock(initTransactionID string) bool {

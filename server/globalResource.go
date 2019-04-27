@@ -22,6 +22,7 @@ type CoordinatorDelegate interface{
 type ResourceMap struct {
 	items map[string]string //key: serverIdentifier + "_" + objectName, value: transactionID + "_" + lockType
 	lock  sync.RWMutex
+	tLock sync.Mutex
 }
 
 // Set adds a new item to the ccmap
@@ -104,30 +105,34 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 	return utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
 }
 
-func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinatorDelegate CoordinatorDelegate) bool {
-	fmt.Println("ResourceMap trylockat")
+func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinator *Coordinator) bool {
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
 	for {
+		d.tLock.Lock()
 		if d.Has(resourceKey) {
 			lockType := d.Get(resourceKey)[1]
 			if lockType == "R" && hangingLockType == "R" {
 				fmt.Println("break 115")
+				d.tLock.Unlock()
 				break
 			}
 		} else {
 			fmt.Println("Break 119")
+			d.tLock.Unlock()
 			break
 		}
-		if coordinatorDelegate.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
-			if coordinatorDelegate.CheckDeadlock(*param.TransactionID) {
+		if coordinator.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
+			if coordinator.CheckDeadlock(*param.TransactionID) {
 				fmt.Println("Abort ", *param.TransactionID)
+				d.tLock.Unlock()
 				return false
 			}
 		}
+		d.tLock.Unlock()
 		time.Sleep(100*time.Millisecond)
 	}
 	d.Set(param)
-	coordinatorDelegate.DeleteDependency(*param.TransactionID, d.Get(resourceKey)[0])
+	coordinator.DeleteDependency(*param.TransactionID)
 	return true
 }
