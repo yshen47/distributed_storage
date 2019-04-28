@@ -40,7 +40,6 @@ func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Fe
 }
 
 func (c *Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-
 	return nil, status.Errorf(codes.Unimplemented, "method AskCommitTransaction not implemented")
 }
 
@@ -85,35 +84,18 @@ func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (
 	return &Empty{}, nil
 }
 
-func (c *Coordinator) AddDependency(fromA string, toB string) bool{
-	if !(c.transactionDependency.Has(fromA) && c.transactionDependency.Get(fromA) == toB) {
-		fmt.Println("New Dependency: ", fromA, " depends on ", toB)
-		c.transactionDependency.Set(fromA, toB)
-		return true
-	}
-	return false
+func (c *Coordinator) CheckDeadlock(req TryLockParam) bool {
+	return c.checkDeadlockHelper(*req.TransactionID, *req.TransactionID)
 }
 
-func (c *Coordinator) DeleteDependency(fromA string) {
-	fmt.Println("Delete dependency: " ,fromA, " on ", c.transactionDependency.Get(fromA))
-	c.transactionDependency.Delete(fromA)
-	fmt.Println(c.transactionDependency.items)
-}
-
-func (c *Coordinator) CheckDeadlock(initTransactionID string) bool {
-	i := 0
-	curr := initTransactionID
-	for i < c.transactionDependency.Size() + 1 {
-		if c.transactionDependency.Has(curr) {
-			next := c.transactionDependency.Get(curr)
-			if next == initTransactionID {
-				return true
-			}
-			curr = next
-		} else {
-			return false
+func (c *Coordinator) checkDeadlockHelper(targetID string, currID string) bool {
+	for _, nextID := range c.transactionDependency.Get(currID) {
+		if nextID == targetID {
+			return true
 		}
-		i += 1
+		if c.checkDeadlockHelper(targetID, nextID) {
+			return true
+		}
 	}
 	return false
 }

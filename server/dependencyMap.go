@@ -10,7 +10,7 @@ import "sync"
 
 // StringDictionary the set of Items
 type DependencyMap struct {
-	items map[string]string
+	items map[string]map[string]bool
 	lock  sync.RWMutex
 }
 
@@ -19,9 +19,12 @@ func (d *DependencyMap) Set(k string, v string) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.items == nil {
-		d.items = make(map[string]string)
+		d.items = make(map[string]map[string]bool)
 	}
-	d.items[k] = v
+	if d.items[k] == nil {
+		d.items[k] = make(map[string]bool)
+	}
+	d.items[k][v] = true
 }
 
 // Delete removes a value from the ccmap, given its key
@@ -44,17 +47,21 @@ func (d *DependencyMap) Has(k string) bool {
 }
 
 // Get returns the value associated with the key
-func (d *DependencyMap) Get(k string) string {
+func (d *DependencyMap) Get(k string) [] string {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
-	return d.items[k]
+	res := make([]string, 0)
+	for k, _ := range d.items[k] {
+		res = append(res, k)
+	}
+	return res
 }
 
 // Clear removes all the items from the ccmap
 func (d *DependencyMap) Clear() {
 	d.lock.Lock()
 	defer d.lock.Unlock()
-	d.items = make(map[string]string)
+	d.items = make(map[string]map[string]bool)
 }
 
 // Size returns the amount of elements in the ccmap
@@ -75,13 +82,3 @@ func (d *DependencyMap) GetKys() []string {
 	return keys
 }
 
-// Strings returns a slice of all the values present
-func (d *DependencyMap) GetVals() []string {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
-	values := []string{}
-	for i := range d.items {
-		values = append(values, d.items[i])
-	}
-	return values
-}

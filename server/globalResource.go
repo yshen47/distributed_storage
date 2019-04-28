@@ -20,7 +20,6 @@ type CoordinatorDelegate interface{
 type ResourceMap struct {
 	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: transactionID + "_" + lockType
 	lock  sync.RWMutex
-	tLock sync.Mutex
 }
 
 type ResourceObject struct {
@@ -123,30 +122,15 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinator *Coordinator) bool {
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
-	//for {
-	//	d.tLock.Lock()
-	//	if d.Has(resourceKey) {
-	//		lockType := d.Get(resourceKey)[1]
-	//		if lockType == "R" && hangingLockType == "R" {
-	//			fmt.Println("break 115")
-	//			d.tLock.Unlock()
-	//			break
-	//		}
-	//	} else {
-	//		fmt.Println("Break 119")
-	//		d.tLock.Unlock()
-	//		break
-	//	}
-	//	if coordinator.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
-	//		if coordinator.CheckDeadlock(*param.TransactionID) {
-	//			fmt.Println("Abort ", *param.TransactionID)
-	//			d.tLock.Unlock()
-	//			return false
-	//		}
-	//	}
-	//	d.tLock.Unlock()
-	//	time.Sleep(100*time.Millisecond)
-	//}
+	if coordinator.CheckDeadlock(param) {
+		return false
+	}
+
+	for _, owner := range d.Get(resourceKey).owners {
+		if !(owner.lockType == "R" && *param.LockType == "R") {
+			coordinator.transactionDependency.Set(*param.TransactionID, owner.transactionID)
+		}
+	}
 
 	if d.items[resourceKey] == nil {
 		d.items[resourceKey] = new(ResourceObject)
@@ -158,6 +142,6 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, co
 		d.Get(resourceKey).lock.Lock()
 	}
 	d.Set(param)
-	//coordinator.DeleteDependency(*param.TransactionID)
+	coordinator.transactionDependency.Delete(*param.TransactionID)
 	return true
 }
