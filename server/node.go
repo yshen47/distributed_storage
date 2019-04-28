@@ -91,7 +91,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		}
 		newMap[*req.ObjectName] = *req.Value
 		newEntry := TransactionEntry{}
-		newEntry.initHistory(*req.TransactionID,*req.ObjectName)
+		newEntry.initHistory(*req.TransactionID,*req.ObjectName,"W")
 		newEntry.CurrState = newMap
 		n.uncommittedHistory.Append(newEntry)
 	}
