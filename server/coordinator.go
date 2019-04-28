@@ -19,6 +19,7 @@ type Coordinator struct {
 
 func (c *Coordinator)Init() {
 	c.globalResources = new(ResourceMap)
+	c.globalResources.Init()
 	c.transactionDependency = new(DependencyMap)
 	c.abortChannel = make(chan string)
 }
@@ -43,15 +44,16 @@ func (*Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
 	fmt.Println("received new trylock request with param: ", *req)
-	time.Sleep(10*time.Second)
 	resourceKey := c.globalResources.ConstructKey(*req)
-	if c.globalResources.Has(resourceKey) {
-		origValues := c.globalResources.Get(resourceKey)
-		c.transactionDependency.Set(*req.TransactionID, origValues[0])
-	}
+	//if c.globalResources.Has(resourceKey) {
+	//	origValues := c.globalResources.Get(resourceKey)
+	//	c.transactionDependency.Set(*req.TransactionID, origValues[0])
+	//}
 	if c.globalResources.TryLockAt(*req, c.abortChannel, c) {
 		message := "Success"
 		fmt.Println("Got the lock with param: ", *req.TransactionID)
+		fmt.Println(c.globalResources.Get(resourceKey).owners)
+		fmt.Println("=================")
 		time.Sleep(10 * time.Second)
 		return &Feedback{Message:&message}, nil
 	} else {
@@ -64,7 +66,16 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 
 func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
 	c.globalResources.Delete(*req)
+	resourceKey := utils.Concatenate(*req.ServerIdentifier, "_", *req.Object)
+	if *req.LockType == "W" {
+		c.globalResources.Get(resourceKey).lock.Unlock()
+	} else {
+		c.globalResources.Get(resourceKey).lock.RUnlock()
+	}
+
 	fmt.Println("Unlock with param: ", *req.TransactionID)
+	fmt.Println(c.globalResources.Get(resourceKey).owners)
+	fmt.Println("=================")
 	return &Empty{}, nil
 }
 

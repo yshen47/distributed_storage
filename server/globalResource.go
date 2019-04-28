@@ -3,12 +3,10 @@
 // see https://github.com/cheekybits/genny
 
 package server
+
 import (
 	"mp3/utils"
-	"strings"
-	"fmt"
 	"sync"
-	"time"
 )
 
 // cat generic_ccmap.go | genny gen "Key=string Value=*blockchain.Transaction" > [targetName].go
@@ -20,9 +18,23 @@ type CoordinatorDelegate interface{
 
 // StringDictionary the set of Items
 type ResourceMap struct {
-	items map[string]string //key: serverIdentifier + "_" + objectName, value: transactionID + "_" + lockType
+	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: transactionID + "_" + lockType
 	lock  sync.RWMutex
 	tLock sync.Mutex
+}
+
+type ResourceObject struct {
+	lock 	sync.RWMutex
+	owners	[] Owner
+}
+
+type Owner struct {
+	transactionID 	string
+	lockType		string
+}
+
+func (d *ResourceMap) Init() {
+	d.items = make(map[string]*ResourceObject)
 }
 
 // Set adds a new item to the ccmap
@@ -30,11 +42,11 @@ func (d *ResourceMap) Set(param TryLockParam) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	resourceKey := d.ConstructKey(param)
-	resourceVal := utils.Concatenate(*param.TransactionID, "_", *param.LockType)
-	if d.items == nil {
-		d.items = make(map[string]string)
+	if d.items[resourceKey] == nil {
+		d.items[resourceKey] = new(ResourceObject)
+
 	}
-	d.items[resourceKey] = resourceVal
+	d.items[resourceKey].owners = append(d.items[resourceKey].owners, Owner{transactionID:*param.TransactionID, lockType:*param.LockType})
 }
 
 // Delete removes a value from the ccmap, given its key
@@ -43,11 +55,14 @@ func (d *ResourceMap) Delete(param ReportUnLockParam) bool {
 	defer d.lock.Unlock()
 
 	resourceKey := utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
-	_, ok := d.items[resourceKey]
-	if ok {
-		delete(d.items, resourceKey)
+
+	for i, owner := range d.items[resourceKey].owners {
+		if owner.transactionID == *param.TransactionID {
+			d.items[resourceKey].owners = append(d.items[resourceKey].owners[:i], d.items[resourceKey].owners[i+1:]...)
+			return true
+		}
 	}
-	return ok
+	return false
 }
 
 // Has returns true if the key exists in the ccmap
@@ -59,17 +74,17 @@ func (d *ResourceMap) Has(k string) bool {
 }
 
 // Get returns the value associated with the key
-func (d *ResourceMap) Get(k string) []string {
+func (d *ResourceMap) Get(k string) *ResourceObject {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
-	return strings.Split(d.items[k], "_")
+	return d.items[k]
 }
 
 // Clear removes all the items from the ccmap
 func (d *ResourceMap) Clear() {
 	d.lock.Lock()
 	defer d.lock.Unlock()
-	d.items = make(map[string]string)
+	d.items = make(map[string]*ResourceObject)
 }
 
 // Size returns the amount of elements in the ccmap
@@ -79,16 +94,16 @@ func (d *ResourceMap) Size() int {
 	return len(d.items)
 }
 
-// Strings returns a slice of all the keys present
-func (d *ResourceMap) GetKys() []string {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
-	keys := []string{}
-	for i := range d.items {
-		keys = append(keys, i)
-	}
-	return keys
-}
+//// Strings returns a slice of all the keys present
+//func (d *ResourceMap) GetKys() []string {
+//	d.lock.RLock()
+//	defer d.lock.RUnlock()
+//	keys := []string{}
+//	for i := range d.items {
+//		keys = append(keys, i)
+//	}
+//	return keys
+//}
 
 //// Strings returns a slice of all the values present
 //func (d *ResourceMap) GetVals() []string {
@@ -108,31 +123,41 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinator *Coordinator) bool {
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
-	for {
-		d.tLock.Lock()
-		if d.Has(resourceKey) {
-			lockType := d.Get(resourceKey)[1]
-			if lockType == "R" && hangingLockType == "R" {
-				fmt.Println("break 115")
-				d.tLock.Unlock()
-				break
-			}
-		} else {
-			fmt.Println("Break 119")
-			d.tLock.Unlock()
-			break
-		}
-		if coordinator.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
-			if coordinator.CheckDeadlock(*param.TransactionID) {
-				fmt.Println("Abort ", *param.TransactionID)
-				d.tLock.Unlock()
-				return false
-			}
-		}
-		d.tLock.Unlock()
-		time.Sleep(100*time.Millisecond)
+	//for {
+	//	d.tLock.Lock()
+	//	if d.Has(resourceKey) {
+	//		lockType := d.Get(resourceKey)[1]
+	//		if lockType == "R" && hangingLockType == "R" {
+	//			fmt.Println("break 115")
+	//			d.tLock.Unlock()
+	//			break
+	//		}
+	//	} else {
+	//		fmt.Println("Break 119")
+	//		d.tLock.Unlock()
+	//		break
+	//	}
+	//	if coordinator.AddDependency(*param.TransactionID, d.Get(resourceKey)[0]) {
+	//		if coordinator.CheckDeadlock(*param.TransactionID) {
+	//			fmt.Println("Abort ", *param.TransactionID)
+	//			d.tLock.Unlock()
+	//			return false
+	//		}
+	//	}
+	//	d.tLock.Unlock()
+	//	time.Sleep(100*time.Millisecond)
+	//}
+
+	if d.items[resourceKey] == nil {
+		d.items[resourceKey] = new(ResourceObject)
+
+	}
+	if hangingLockType == "R" {
+		d.Get(resourceKey).lock.RLock()
+	} else {
+		d.Get(resourceKey).lock.Lock()
 	}
 	d.Set(param)
-	coordinator.DeleteDependency(*param.TransactionID)
+	//coordinator.DeleteDependency(*param.TransactionID)
 	return true
 }
