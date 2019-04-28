@@ -16,18 +16,21 @@ type Node struct {
 	data                map[string]string // this is committed state
 	lockMap  			map[string]*LockTuple
 	lockMapLock			sync.RWMutex
-	uncommittedHistory 	[]TransactionHistory
+	uncommittedHistory 	*TransactionHistory
 }
 
-type TransactionHistory struct {
-	objName				string // record which object was read/write in current operation, used for 2PL lock
-	transactionID		string
-	CurrState			map[string]string
+type TransactionEntry struct {
+	ObjName       string // record which object was read/write in current operation, used for 2PL lock
+	LockType	  string // store lock type
+	transactionID string
+	CurrState     map[string]string
 }
 
-func (h *TransactionHistory)initHistory(id string){
+func (h *TransactionEntry)initHistory(id string, objName string, locktype string){
 	h.transactionID = id
 	h.CurrState = make(map[string]string)
+	h.ObjName = objName
+	h.LockType = locktype
 }
 
 
@@ -46,7 +49,7 @@ type NodeServer interface {
 func (n *Node) Init() {
 	n.lockMap = make(map[string]*LockTuple)
 	n.data = make(map[string]string)
-	n.uncommittedHistory = make([]TransactionHistory,0)
+	n.uncommittedHistory = new(TransactionHistory)
 }
 
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
@@ -75,29 +78,22 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
 	}
 
-	if len(n.uncommittedHistory) == 0 {
-		currentState := TransactionHistory{}
-		currentState.initHistory(*req.TransactionID)
-		currentState.CurrState[*req.ObjectName] = *req.Value
-		currentState.objName = *req.ObjectName
-		n.uncommittedHistory = append(n.uncommittedHistory,currentState)
-	}else {
-		var prevMap map[string]string
-		for i :=len(n.uncommittedHistory) -1; i >=0; i-- { // find the most updated table with my transaction ID
-			if n.uncommittedHistory[i].transactionID == *req.TransactionID {
-				prevMap = n.uncommittedHistory[i].CurrState
-			}
-		}
+	if n.uncommittedHistory.Size() == 0 {
+		h := TransactionEntry{}
+		h.initHistory(*req.TransactionID,*req.ObjectName,"W")
+		h.CurrState = make(map[string]string)
+		n.uncommittedHistory.Append(h)
+	}else{
+		prevMap := n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
 		newMap := make(map[string]string)
 		for k,v := range prevMap {
 			newMap[k] = v
 		}
 		newMap[*req.ObjectName] = *req.Value
-		newEntry := TransactionHistory{}
+		newEntry := TransactionEntry{}
+		newEntry.initHistory(*req.TransactionID,*req.ObjectName)
 		newEntry.CurrState = newMap
-		newEntry.transactionID = *req.TransactionID
-		newEntry.objName = *req.ObjectName
-		n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
+		n.uncommittedHistory.Append(newEntry)
 	}
 
 	resFeedback := &Feedback{}
@@ -129,22 +125,15 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.RLock(*req.ObjectName, *req.TransactionID)
 	//defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
-	var prevMap map[string]string
-	for i :=len(n.uncommittedHistory) -1; i >=0; i-- { // find the most updated table with my transaction ID
-		if n.uncommittedHistory[i].transactionID == *req.TransactionID {
-			prevMap = n.uncommittedHistory[i].CurrState
-		}
-	}
+	prevMap := n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
 	newMap := make(map[string]string)
 	for k,v := range prevMap {
 		newMap[k] = v
 	}
-	newEntry := TransactionHistory{}
+	newEntry := TransactionEntry{}
+	newEntry.initHistory(*req.TransactionID,*req.ObjectName,"R")
 	newEntry.CurrState = newMap
-	newEntry.transactionID = *req.TransactionID
-	newEntry.objName = *req.ObjectName
-	n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
-
+	n.uncommittedHistory.Append(newEntry)
 
 	resFeedback := &Feedback{}
 	val, ok := n.data[*req.ObjectName]
@@ -154,20 +143,24 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 
 
 func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-	fmt.Println("here")
-	for i := len(n.uncommittedHistory) - 1; i >= 0; i-- {
-		if n.uncommittedHistory[i].transactionID == *req.Id {
-			for k,v := range n.uncommittedHistory[i].CurrState {
+	for i := n.uncommittedHistory.Size() - 1; i >= 0; i-- {
+		if n.uncommittedHistory.Get(i).transactionID == *req.Id {
+			for k,v := range n.uncommittedHistory.Get(i).CurrState {
 				n.data[k] = v
 			}
-			n.uncommittedHistory = nil
-			res := Feedback{}
-			words := "COMMIT OK"
-			res.Message = &words
-			return &res,nil
+			currEntry := n.uncommittedHistory.Delete(i)
+			if currEntry.LockType == "W" {
+				n.WUnLock(currEntry.ObjName,currEntry.transactionID)
+			}else{
+				n.RUnLock(currEntry.ObjName,currEntry.transactionID)
+			}
+
 		}
 	}
-	return nil, status.Errorf(codes.Unknown, "commit fails")
+	res := Feedback{}
+	words := "COMMIT OK"
+	res.Message = &words
+	return &res,nil
 }
 func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	n.abortTransaction(*req.Id)
@@ -175,7 +168,16 @@ func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedbac
 }
 
 func (n *Node) abortTransaction(transactionID string) {
-	n.uncommittedHistory = nil
+	for i := n.uncommittedHistory.Size() - 1; i >= 0; i-- {
+		if n.uncommittedHistory.Get(i).transactionID == transactionID {
+			currEntry := n.uncommittedHistory.Delete(i)
+			if currEntry.LockType == "W" {
+				n.WUnLock(currEntry.ObjName,currEntry.transactionID)
+			}else{
+				n.RUnLock(currEntry.ObjName,currEntry.transactionID)
+			}
+		}
+	}
 }
 
 func (n *Node) RLock(objectName string, transactionID string) bool{
