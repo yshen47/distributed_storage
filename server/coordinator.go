@@ -12,21 +12,15 @@ import (
 
 // Coordinator can be embedded to have forward compatible implementations.
 type Coordinator struct {
-	abortChannel          chan string    //transactionID in the channel
 	globalResources       *ResourceMap   //serverIdentifier->objectName->transactionID
 	transactionDependency *DependencyMap //key depend on value, key and value is transactionID
-	serverConnection	  []NodeClient
+	ServerConnection	  []NodeClient
 }
 
-func (c *Coordinator)Init(serverConn []*NodeClient) {
+func (c *Coordinator)Init() {
 	c.globalResources = new(ResourceMap)
 	c.globalResources.Init()
 	c.transactionDependency = new(DependencyMap)
-	c.abortChannel = make(chan string)
-	c.serverConnection = make([]NodeClient,5)
-	for i := 0; i< len(serverConn); i++{
-		c.serverConnection = append(c.serverConnection, *serverConn[i])
-	}
 }
 
 func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {
@@ -54,7 +48,7 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 	//	origValues := c.globalResources.Get(resourceKey)
 	//	c.transactionDependency.Set(*req.TransactionID, origValues[0])
 	//}
-	if c.globalResources.TryLockAt(*req, c.abortChannel, c) {
+	if c.globalResources.TryLockAt(*req, c) {
 		message := "Success"
 		fmt.Println("Got the lock with param: ", *req.TransactionID)
 		fmt.Println(c.globalResources.Get(resourceKey).owners)

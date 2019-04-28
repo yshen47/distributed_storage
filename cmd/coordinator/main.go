@@ -14,10 +14,11 @@ func main() {
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 	utils.CheckError(err)
 	nodeServer := grpc.NewServer()
-	serverConn := make([] *server.NodeClient, 5)
-	dial(serverConn)
 	coordinator := server.Coordinator{}
-	coordinator.Init(serverConn)
+	coordinator.Init()
+
+	go dial(&coordinator)
+
 	server.RegisterCoordinatorServer(nodeServer, &coordinator)
 	err = nodeServer.Serve(lis)
 	utils.CheckError(err)
@@ -25,17 +26,17 @@ func main() {
 	fmt.Println("End Process.")
 }
 
-
-func dial(serverConn [] *server.NodeClient){
-
+func dial(coordinator *server.Coordinator){
+	serverConn := make([] server.NodeClient, 5)
 	serverPorts := [5]string {"5600", "5700", "5800", "5900", "6000"}
 	for i := 0; i<5; i++ {
 		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
 		fmt.Println("Dial ", ipaddr)
-		conn, err := grpc.Dial(ipaddr,  grpc.WithInsecure())
+		conn, err := grpc.Dial(ipaddr,  grpc.WithInsecure(), grpc.WithBlock())
 		utils.CheckError(err)
 		temp := server.NewNodeClient(conn)
-		serverConn[i] = &temp
+		serverConn[i] = temp
 	}
+	coordinator.ServerConnection = serverConn
 	fmt.Println("Successfully dialed all of the servers.")
 }

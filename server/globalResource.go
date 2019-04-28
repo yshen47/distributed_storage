@@ -119,7 +119,7 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 	return utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
 }
 
-func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, coordinator *Coordinator) bool {
+func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bool {
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
 	if coordinator.CheckDeadlock(param) {

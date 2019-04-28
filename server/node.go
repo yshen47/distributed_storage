@@ -181,9 +181,10 @@ func (n *Node) RLock(objectName string, transactionID string) bool{
 	tryLockParam.Object = &objectName
 	lockType := "R"
 	tryLockParam.LockType = &lockType
-	feedback, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
-	utils.CheckError(err)
-	if *feedback.Message == "Abort" {
+	_, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
+	s, _ := status.FromError(err)
+	if s.Code().String() == "Aborted" {
+		fmt.Println(s.Message())
 		n.abortTransaction(transactionID)
 		return false
 	}
@@ -212,14 +213,14 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 	lockType := "W"
 	tryLockParam.LockType = &lockType
 	tryLockParam.Object = &objectName
-	feedback, _ := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
-
-	//TODO: need more graceful solution
-	//utils.CheckError(err)
-	if *feedback.Message == "Abort" {
+	_, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
+	s, _ := status.FromError(err)
+	if s.Code().String() == "Aborted" {
+		fmt.Println(s.Message())
 		n.abortTransaction(transactionID)
 		return false
 	}
+
 	n.lockMap[objectName].mutex.Lock()
 	return true
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 	"mp3/server"
 	"mp3/utils"
 	"os"
@@ -74,11 +75,13 @@ func main() {
 						setparam.TransactionID = currTransactionID.Id
 						setparam.ServerIdentifier = &val[0]
 						setparam.Value = &words[2]
-						feedback,err := serverConn[idx].ClientSet(context.Background(),&setparam)
-						fmt.Println("idx = ",idx)
-						if err != nil{
-							fmt.Println("error!", err)
-						}else{
+						feedback, err := serverConn[idx].ClientSet(context.Background(),&setparam)
+						//fmt.Println("idx = ",idx)
+						s, _ := status.FromError(err)
+						if s.Code().String() == "Aborted" {
+							fmt.Println("ABORTED")
+						}
+						if err == nil{
 							fmt.Println(*feedback.Message)
 						}
 
