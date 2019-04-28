@@ -20,6 +20,7 @@ type Node struct {
 }
 
 type TransactionHistory struct {
+	objName				string // record which object was read/write in current operation, used for 2PL lock
 	transactionID		string
 	CurrState			map[string]string
 }
@@ -78,6 +79,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		currentState := TransactionHistory{}
 		currentState.initHistory(*req.TransactionID)
 		currentState.CurrState[*req.ObjectName] = *req.Value
+		currentState.objName = *req.ObjectName
 		n.uncommittedHistory = append(n.uncommittedHistory,currentState)
 	}else {
 		var prevMap map[string]string
@@ -94,6 +96,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		newEntry := TransactionHistory{}
 		newEntry.CurrState = newMap
 		newEntry.transactionID = *req.TransactionID
+		newEntry.objName = *req.ObjectName
 		n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
 	}
 
@@ -139,6 +142,7 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	newEntry := TransactionHistory{}
 	newEntry.CurrState = newMap
 	newEntry.transactionID = *req.TransactionID
+	newEntry.objName = *req.ObjectName
 	n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
 
 
@@ -150,7 +154,8 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 
 
 func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-	for i := len(n.uncommittedHistory); i >= 0; i-- {
+	fmt.Println("here")
+	for i := len(n.uncommittedHistory) - 1; i >= 0; i-- {
 		if n.uncommittedHistory[i].transactionID == *req.Id {
 			for k,v := range n.uncommittedHistory[i].CurrState {
 				n.data[k] = v
