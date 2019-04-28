@@ -164,7 +164,10 @@ func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedba
 }
 func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	n.abortTransaction(*req.Id)
-	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
+	res := Feedback{}
+	words := "ABORTED"
+	res.Message = &words
+	return &res,nil
 }
 
 func (n *Node) abortTransaction(transactionID string) {
