@@ -4,7 +4,10 @@
 
 package server
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // cat generic_ccmap.go | genny gen "String=string String=*blockchain.Transaction" > [targetName].go
 
@@ -18,6 +21,7 @@ type DependencyMap struct {
 func (d *DependencyMap) Set(k string, v string) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
+
 	if d.items == nil {
 		d.items = make(map[string]map[string]bool)
 	}
@@ -25,6 +29,8 @@ func (d *DependencyMap) Set(k string, v string) {
 		d.items[k] = make(map[string]bool)
 	}
 	d.items[k][v] = true
+	fmt.Println("Add New dependency, from ", k, " to ", v, ".")
+	fmt.Println(d.items[k])
 }
 
 // Delete removes a value from the ccmap, given its key
@@ -34,6 +40,7 @@ func (d *DependencyMap) Delete(k string) bool {
 	_, ok := d.items[k]
 	if ok {
 		delete(d.items, k)
+		fmt.Println("Remove dependency from ", k, ".")
 	}
 	return ok
 }
@@ -51,8 +58,8 @@ func (d *DependencyMap) Get(k string) [] string {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
 	res := make([]string, 0)
-	for k, _ := range d.items[k] {
-		res = append(res, k)
+	for id, _ := range d.items[k] {
+		res = append(res, id)
 	}
 	return res
 }

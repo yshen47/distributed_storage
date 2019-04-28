@@ -126,9 +126,11 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, abortChannel chan string, co
 		return false
 	}
 
-	for _, owner := range d.Get(resourceKey).owners {
-		if !(owner.lockType == "R" && *param.LockType == "R") {
-			coordinator.transactionDependency.Set(*param.TransactionID, owner.transactionID)
+	if d.Has(resourceKey) {
+		for _, owner := range d.Get(resourceKey).owners {
+			if !(owner.lockType == "R" && *param.LockType == "R") {
+				coordinator.transactionDependency.Set(*param.TransactionID, owner.transactionID)
+			}
 		}
 	}
 

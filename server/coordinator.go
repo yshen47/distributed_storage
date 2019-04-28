@@ -48,7 +48,7 @@ func (*Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (
 }
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
-	fmt.Println("received new trylock request with param: ", *req)
+	fmt.Println("received new trylock request with transactionID: ", *req.TransactionID, ", server:", *req.ServerIdentifier, ", object:", *req.Object)
 	resourceKey := c.globalResources.ConstructKey(*req)
 	//if c.globalResources.Has(resourceKey) {
 	//	origValues := c.globalResources.Get(resourceKey)
@@ -59,7 +59,7 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 		fmt.Println("Got the lock with param: ", *req.TransactionID)
 		fmt.Println(c.globalResources.Get(resourceKey).owners)
 		fmt.Println("=================")
-		time.Sleep(10 * time.Second)
+		//time.Sleep(10 * time.Second)
 		return &Feedback{Message:&message}, nil
 	} else {
 		message := "Abort"
@@ -84,12 +84,25 @@ func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (
 	return &Empty{}, nil
 }
 
-func (c *Coordinator) CheckDeadlock(req TryLockParam) bool {
-	return c.checkDeadlockHelper(*req.TransactionID, *req.TransactionID)
+func (c *Coordinator) CheckDeadlock(param TryLockParam) bool {
+	fmt.Println("Dead lock detection: ")
+	resourceKey := c.globalResources.ConstructKey(param)
+	if c.globalResources.Has(resourceKey) {
+		for _, owner := range c.globalResources.Get(resourceKey).owners {
+			if !(owner.lockType == "R" && *param.LockType == "R") {
+				if c.checkDeadlockHelper(*param.TransactionID, owner.transactionID) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (c *Coordinator) checkDeadlockHelper(targetID string, currID string) bool {
+	fmt.Println("Current ID:", currID)
 	for _, nextID := range c.transactionDependency.Get(currID) {
+		fmt.Println("Next ID: ", nextID)
 		if nextID == targetID {
 			return true
 		}

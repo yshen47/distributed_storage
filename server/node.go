@@ -65,7 +65,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	}
 	n.lockMapLock.Unlock()
 	isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
-	defer n.WUnLock(*req.ObjectName, *req.TransactionID)
+	//defer n.WUnLock(*req.ObjectName, *req.TransactionID)
 
 	if !isSuccessful {
 		resFeedback := &Feedback{}
@@ -74,7 +74,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
 	}
 
-	if (len(n.uncommittedHistory) == 0){
+	if len(n.uncommittedHistory) == 0 {
 		currentState := TransactionHistory{}
 		currentState.initHistory(*req.TransactionID)
 		currentState.CurrState[*req.ObjectName] = *req.Value
@@ -124,7 +124,7 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 
 
 	n.RLock(*req.ObjectName, *req.TransactionID)
-	defer n.RUnLock(*req.ObjectName, *req.TransactionID)
+	//defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
 	var prevMap map[string]string
 	for i :=len(n.uncommittedHistory) -1; i >=0; i-- { // find the most updated table with my transaction ID
@@ -212,8 +212,10 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 	lockType := "W"
 	tryLockParam.LockType = &lockType
 	tryLockParam.Object = &objectName
-	feedback, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
-	utils.CheckError(err)
+	feedback, _ := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
+
+	//TODO: need more graceful solution
+	//utils.CheckError(err)
 	if *feedback.Message == "Abort" {
 		n.abortTransaction(transactionID)
 		return false
