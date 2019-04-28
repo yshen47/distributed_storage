@@ -19,6 +19,7 @@ func main() {
 
 	coordAddr := utils.Concatenate("127.0.0.1",":","6100")
 
+	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 
 	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure(), grpc.WithBlock())
 	fmt.Println("Successfully dialed coordinator")
@@ -30,7 +31,7 @@ func main() {
 	node.Name = strconv.Itoa(portNum)
 	node.CoordinatorDelegate = coordConn
 
-	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
+
 	utils.CheckError(err)
 	nodeServer := grpc.NewServer()
 	server.RegisterNodeServer(nodeServer, &node)

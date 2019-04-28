@@ -15,13 +15,18 @@ type Coordinator struct {
 	abortChannel          chan string    //transactionID in the channel
 	globalResources       *ResourceMap   //serverIdentifier->objectName->transactionID
 	transactionDependency *DependencyMap //key depend on value, key and value is transactionID
+	serverConnection	  []NodeClient
 }
 
-func (c *Coordinator)Init() {
+func (c *Coordinator)Init(serverConn []*NodeClient) {
 	c.globalResources = new(ResourceMap)
 	c.globalResources.Init()
 	c.transactionDependency = new(DependencyMap)
 	c.abortChannel = make(chan string)
+	c.serverConnection = make([]NodeClient,5)
+	for i := 0; i< len(serverConn); i++{
+		c.serverConnection = append(c.serverConnection, *serverConn[i])
+	}
 }
 
 func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {
@@ -34,7 +39,8 @@ func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Fe
 	return nil, status.Errorf(codes.Unimplemented, "method CloseTransaction not implemented")
 }
 
-func (*Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+func (c *Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+
 	return nil, status.Errorf(codes.Unimplemented, "method AskCommitTransaction not implemented")
 }
 

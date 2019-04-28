@@ -13,11 +13,22 @@ import (
 type Node struct {
 	Name                string
 	CoordinatorDelegate CoordinatorClient
-	data                map[string]string
-
+	data                map[string]string // this is committed state
 	lockMap  			map[string]*LockTuple
 	lockMapLock			sync.RWMutex
+	uncommittedHistory 	[]TransactionHistory
 }
+
+type TransactionHistory struct {
+	transactionID		string
+	CurrState			map[string]string
+}
+
+func (h *TransactionHistory)initHistory(id string){
+	h.transactionID = id
+	h.CurrState = make(map[string]string)
+}
+
 
 type LockTuple struct {
 	mutex         sync.RWMutex
@@ -34,6 +45,7 @@ type NodeServer interface {
 func (n *Node) Init() {
 	n.lockMap = make(map[string]*LockTuple)
 	n.data = make(map[string]string)
+	n.uncommittedHistory = make([]TransactionHistory,0)
 }
 
 func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error) {
@@ -54,13 +66,37 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	n.lockMapLock.Unlock()
 	isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 	defer n.WUnLock(*req.ObjectName, *req.TransactionID)
+
 	if !isSuccessful {
 		resFeedback := &Feedback{}
 		result := "ABORTED"
 		resFeedback.Message = &result
 		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
 	}
-	n.data[*req.ObjectName] = *req.Value
+
+	if (len(n.uncommittedHistory) == 0){
+		currentState := TransactionHistory{}
+		currentState.initHistory(*req.TransactionID)
+		currentState.CurrState[*req.ObjectName] = *req.Value
+		n.uncommittedHistory = append(n.uncommittedHistory,currentState)
+	}else {
+		var prevMap map[string]string
+		for i :=len(n.uncommittedHistory) -1; i >=0; i-- { // find the most updated table with my transaction ID
+			if n.uncommittedHistory[i].transactionID == *req.TransactionID {
+				prevMap = n.uncommittedHistory[i].CurrState
+			}
+		}
+		newMap := make(map[string]string)
+		for k,v := range prevMap {
+			newMap[k] = v
+		}
+		newMap[*req.ObjectName] = *req.Value
+		newEntry := TransactionHistory{}
+		newEntry.CurrState = newMap
+		newEntry.transactionID = *req.TransactionID
+		n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
+	}
+
 	resFeedback := &Feedback{}
 	result := "OK"
 	resFeedback.Message = &result
@@ -90,6 +126,22 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.RLock(*req.ObjectName, *req.TransactionID)
 	defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
+	var prevMap map[string]string
+	for i :=len(n.uncommittedHistory) -1; i >=0; i-- { // find the most updated table with my transaction ID
+		if n.uncommittedHistory[i].transactionID == *req.TransactionID {
+			prevMap = n.uncommittedHistory[i].CurrState
+		}
+	}
+	newMap := make(map[string]string)
+	for k,v := range prevMap {
+		newMap[k] = v
+	}
+	newEntry := TransactionHistory{}
+	newEntry.CurrState = newMap
+	newEntry.transactionID = *req.TransactionID
+	n.uncommittedHistory = append(n.uncommittedHistory, newEntry)
+
+
 	resFeedback := &Feedback{}
 	val, ok := n.data[*req.ObjectName]
 	resFeedback.Message = &val
@@ -97,16 +149,28 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 }
 
 
-func (*Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
+func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	for i := len(n.uncommittedHistory); i >= 0; i-- {
+		if n.uncommittedHistory[i].transactionID == *req.Id {
+			for k,v := range n.uncommittedHistory[i].CurrState {
+				n.data[k] = v
+			}
+			n.uncommittedHistory = nil
+			res := Feedback{}
+			words := "COMMIT OK"
+			res.Message = &words
+			return &res,nil
+		}
+	}
+	return nil, status.Errorf(codes.Unknown, "commit fails")
 }
 func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	n.abortTransaction(*req.Id)
 	return nil, status.Errorf(codes.Unimplemented, "method AbortTransaction not implemented")
 }
 
-func (*Node) abortTransaction(transactionID string) {
-
+func (n *Node) abortTransaction(transactionID string) {
+	n.uncommittedHistory = nil
 }
 
 func (n *Node) RLock(objectName string, transactionID string) bool{
