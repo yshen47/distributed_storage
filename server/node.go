@@ -65,16 +65,19 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		n.lockMap[*req.ObjectName].owners = make(map[string]Owner)
 	}
 	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
-	n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
 	n.lockMapLock.Unlock()
-	isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
-	//defer n.WUnLock(*req.ObjectName, *req.TransactionID)
+	if !ok {
+		n.lockMapLock.Lock()
+		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
+		n.lockMapLock.Unlock()
+		isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 
-	if !isSuccessful {
-		resFeedback := &Feedback{}
-		result := "ABORTED"
-		resFeedback.Message = &result
-		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
+		if !isSuccessful {
+			resFeedback := &Feedback{}
+			result := "ABORTED"
+			resFeedback.Message = &result
+			return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
+		}
 	}
 
 	if n.uncommittedHistory.Size() == 0 {
