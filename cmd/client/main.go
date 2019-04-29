@@ -15,8 +15,8 @@ import (
 
 func main() {
 
-	serverPorts := [5]string {"5600", "5700", "5800", "5900", "6000"}
-	coordPort := "6100"
+	serverPorts := [5]string {"6000", "6100", "6200", "6300", "6400"}
+	coordPort := "6500"
 
 	var serverConn [] server.NodeClient = make([] server.NodeClient, 5)
 	for i := 0; i<5; i++ {
@@ -53,14 +53,14 @@ func main() {
 		if cmd == "COMMIT"{
 			feedback, error :=coordConn.AskCommitTransaction(context.Background(),currTransactionID)
 			utils.CheckError(error)
-			fmt.Println(feedback.Message)
+			fmt.Println(*feedback.Message)
 			break
 		}else if cmd == "BEGIN"{
 			fmt.Println(currTransactionID)
 		}else if cmd == "ABORT" {
 			feedback, error :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
 			utils.CheckError(error)
-			fmt.Println(feedback.Message)
+			fmt.Println(*feedback.Message)
 			break
 		}else if cmd == "SET" || cmd == "GET"{
 			val := strings.Split(words[1],".")
@@ -68,7 +68,7 @@ func main() {
 				fmt.Println("command format: [COMMIT/ABORT/GET/SET] [Server.Obj]")
 			}
 			if temp, ok := strconv.Atoi(val[0]); ok==nil{
-				if idx := (temp-5600)/100; idx < 5 {
+				if idx := (temp-6000)/100; idx < 5 {
 					if cmd == "SET" {
 						setparam := server.SetParams{}
 						setparam.ObjectName = &val[1]

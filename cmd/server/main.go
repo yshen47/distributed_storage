@@ -17,7 +17,7 @@ func main() {
 	}
 	portNum, err := strconv.Atoi(os.Args[1])
 
-	coordAddr := utils.Concatenate("127.0.0.1",":","6100")
+	coordAddr := utils.Concatenate("127.0.0.1",":","6500")
 
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 

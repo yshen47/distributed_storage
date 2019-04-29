@@ -136,9 +136,16 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.uncommittedHistory.Append(newEntry)
 
 	resFeedback := &Feedback{}
-	val, ok := n.data[*req.ObjectName]
+	val, ok := newMap[*req.ObjectName]
+	if !ok {
+		val,ok = n.data[*req.ObjectName]
+		if !ok {
+			return resFeedback, status.Error(codes.Aborted, "not found")
+		}
+	}
 	resFeedback.Message = &val
 	return resFeedback, nil
+
 }
 
 

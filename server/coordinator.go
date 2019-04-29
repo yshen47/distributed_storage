@@ -34,11 +34,25 @@ func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Fe
 }
 
 func (c *Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskCommitTransaction not implemented")
+	for _,elem := range c.ServerConnection {
+		_,err := elem.CommitTransaction(context.Background(),req)
+		utils.CheckError(err)
+	}
+	res := Feedback{}
+	temp := "COMMITTED!"
+	res.Message = &temp
+	return &res,nil
 }
 
-func (*Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskAbortTransaction not implemented")
+func (c *Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
+	for _,elem := range c.ServerConnection {
+		_,err := elem.AbortTransaction(context.Background(),req)
+		utils.CheckError(err)
+	}
+	res := Feedback{}
+	temp := "ABORTED!"
+	res.Message = &temp
+	return &res,nil
 }
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {

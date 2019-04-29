@@ -1,5 +1,5 @@
-go run cmd/server/main.go 5600 &
-go run cmd/server/main.go 5700 &
-go run cmd/server/main.go 5800 &
-go run cmd/server/main.go 5900 &
-go run cmd/server/main.go 6000
+go run cmd/server/main.go 6000 &
+go run cmd/server/main.go 6100 &
+go run cmd/server/main.go 6200 &
+go run cmd/server/main.go 6300 &
+go run cmd/server/main.go 6400
