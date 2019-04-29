@@ -123,7 +123,13 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.RLock(*req.ObjectName, *req.TransactionID)
 	//defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
-	prevMap := n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
+	var prevMap map[string] string
+	if n.uncommittedHistory.Size() > 0 {
+		prevMap = n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
+	} else {
+		prevMap = make(map[string]string)
+	}
+
 	newMap := make(map[string]string)
 	for k,v := range prevMap {
 		newMap[k] = v
@@ -138,7 +144,9 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	if !ok {
 		val,ok = n.data[*req.ObjectName]
 		if !ok {
-			return resFeedback, status.Error(codes.Aborted, "not found")
+			n.abortTransaction(*req.TransactionID)
+			m := "ABORTED"
+			return &Feedback{Message:&m}, status.Error(codes.Aborted, "not found")
 		}
 	}
 	resFeedback.Message = &val
