@@ -197,11 +197,13 @@ func (n *Node) abortTransaction(transactionID string) {
 
 func (n *Node) RLock(objectName string, transactionID string) bool{
 	n.lockMapLock.Lock()
-	defer n.lockMapLock.Unlock()
 	fmt.Println("RLOCK CHECK:", n.lockMap[objectName].owners[transactionID])
 	if n.lockMap[objectName].owners[transactionID].lockType == "W" {
+		n.lockMapLock.Unlock()
 		return true
 	}
+	n.lockMapLock.Unlock()
+
 	fmt.Println("RLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
@@ -216,7 +218,10 @@ func (n *Node) RLock(objectName string, transactionID string) bool{
 		n.abortTransaction(transactionID)
 		return false
 	}
+
+	n.lockMapLock.Lock()
 	n.lockMap[objectName].mutex.RLock()
+	n.lockMapLock.Unlock()
 	return true
 }
 
@@ -255,8 +260,9 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 		n.abortTransaction(transactionID)
 		return false
 	}
-
+	n.lockMapLock.Lock()
 	n.lockMap[objectName].mutex.Lock()
+	n.lockMapLock.Unlock()
 	return true
 }
 
