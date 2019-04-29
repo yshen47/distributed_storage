@@ -56,6 +56,8 @@ func (c *Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction)
 }
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
+
+
 	fmt.Println("received new trylock request with transactionID: ", *req.TransactionID, ", server:", *req.ServerIdentifier, ", object:", *req.Object)
 	resourceKey := c.globalResources.ConstructKey(*req)
 	//if c.globalResources.Has(resourceKey) {
