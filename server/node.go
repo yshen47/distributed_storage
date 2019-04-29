@@ -67,7 +67,7 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
 
 	n.lockMapLock.Unlock()
-	if !ok {
+	if !ok || (ok && n.lockMap[*req.ObjectName].owners[*req.TransactionID].lockType == "R") {
 		n.lockMapLock.Lock()
 		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
 		n.lockMapLock.Unlock()
