@@ -1,10 +1,10 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"context"
 	"mp3/utils"
 	"sync"
 )
@@ -35,8 +35,8 @@ func (h *TransactionEntry)initHistory(id string, objName string, locktype string
 
 
 type LockTuple struct {
-	mutex         sync.RWMutex
-	transactionID string
+	mutex         	sync.RWMutex
+	owners 	map[string]Owner
 }
 // NodeServer is the server API for Node service.
 type NodeServer interface {
@@ -56,17 +56,16 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	if *req.ServerIdentifier != n.Name {
 		return nil, status.Error(codes.InvalidArgument, "Called the wrong node server")
 	}
+
 	//TODO: add WLOCK
 	n.lockMapLock.Lock()
 	_, ok := n.lockMap[*req.ObjectName]
 	if !ok {
-		n.lockMap[*req.ObjectName] = &LockTuple{
-			mutex:         sync.RWMutex{},
-			transactionID: *req.TransactionID,
-		}
-	} else {
-		n.lockMap[*req.ObjectName].transactionID = *req.TransactionID
+		n.lockMap[*req.ObjectName] = new(LockTuple)
+		n.lockMap[*req.ObjectName].owners = make(map[string]Owner)
 	}
+	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
+	n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
 	n.lockMapLock.Unlock()
 	isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 	//defer n.WUnLock(*req.ObjectName, *req.TransactionID)
@@ -110,15 +109,14 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.lockMapLock.RLock()
 	_, ok := n.lockMap[*req.ObjectName]
 	if !ok {
-		resFeedback := &Feedback{}
-		var result string
-		result = "NOT FOUND"
-		resFeedback.Message = &result
-		//TODO: tell coordinator to abort the current transaction
-
-		n.lockMapLock.RUnlock()
-		return resFeedback, status.Error(codes.Aborted, "not found")
+		n.lockMap[*req.ObjectName] = new(LockTuple)
+		n.lockMap[*req.ObjectName].owners = make(map[string]Owner)
 	}
+	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
+	if !ok {
+		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"R"}
+	}
+
 	n.lockMapLock.RUnlock()
 
 
@@ -191,6 +189,12 @@ func (n *Node) abortTransaction(transactionID string) {
 }
 
 func (n *Node) RLock(objectName string, transactionID string) bool{
+	n.lockMapLock.Lock()
+	defer n.lockMapLock.Unlock()
+	fmt.Println("RLOCK CHECK:", n.lockMap[objectName].owners[transactionID])
+	if n.lockMap[objectName].owners[transactionID].lockType == "W" {
+		return true
+	}
 	fmt.Println("RLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
@@ -210,6 +214,11 @@ func (n *Node) RLock(objectName string, transactionID string) bool{
 }
 
 func (n *Node) RUnLock(objectName string, transactionID string) {
+	n.lockMapLock.Lock()
+	defer n.lockMapLock.Unlock()
+	if n.lockMap[objectName].owners[transactionID].lockType == "W" {
+		return
+	}
 	fmt.Println("RUnLock on ", objectName)
 	reportUnlockParam := ReportUnLockParam{}
 	reportUnlockParam.Object = &objectName
@@ -220,9 +229,11 @@ func (n *Node) RUnLock(objectName string, transactionID string) {
 	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
 	utils.CheckError(err)
 	n.lockMap[objectName].mutex.RUnlock()
+	delete(n.lockMap[objectName].owners, transactionID)
 }
 
 func (n *Node) WLock(objectName string, transactionID string) bool{
+
 	fmt.Println("WLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
@@ -243,6 +254,8 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 }
 
 func (n *Node) WUnLock(objectName string, transactionID string) {
+	n.lockMapLock.Lock()
+	defer n.lockMapLock.Unlock()
 	fmt.Println("WUnLock on ", objectName)
 	reportUnlockParam := ReportUnLockParam{}
 	reportUnlockParam.Object = &objectName
@@ -252,4 +265,5 @@ func (n *Node) WUnLock(objectName string, transactionID string) {
 	reportUnlockParam.LockType = &lockType
 	n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
 	n.lockMap[objectName].mutex.Unlock()
+	delete(n.lockMap[objectName].owners, transactionID)
 }
