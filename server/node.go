@@ -65,23 +65,20 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		n.lockMap[*req.ObjectName].owners = make(map[string]Owner)
 	}
 	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
-	var isSuccessful bool
-	if !ok {
-		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
-		isSuccessful = n.WLock(*req.ObjectName, *req.TransactionID)
-	} else{
-		isSuccessful = true
-	}
 
 	n.lockMapLock.Unlock()
+	if !ok {
+		n.lockMapLock.Lock()
+		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = Owner{transactionID:*req.TransactionID,lockType:"W"}
+		n.lockMapLock.Unlock()
+		isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 
-	//defer n.WUnLock(*req.ObjectName, *req.TransactionID)
-
-	if !isSuccessful {
-		resFeedback := &Feedback{}
-		result := "ABORTED"
-		resFeedback.Message = &result
-		return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
+		if !isSuccessful {
+			resFeedback := &Feedback{}
+			result := "ABORTED"
+			resFeedback.Message = &result
+			return resFeedback, status.Errorf(codes.Aborted, "Transaction aborted due to deadlock!")
+		}
 	}
 
 	if n.uncommittedHistory.Size() == 0 {
@@ -130,7 +127,13 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	n.RLock(*req.ObjectName, *req.TransactionID)
 	//defer n.RUnLock(*req.ObjectName, *req.TransactionID)
 
-	prevMap := n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
+	var prevMap map[string] string
+	if n.uncommittedHistory.Size() > 0 {
+		prevMap = n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
+	} else {
+		prevMap = make(map[string]string)
+	}
+
 	newMap := make(map[string]string)
 	for k,v := range prevMap {
 		newMap[k] = v
@@ -145,7 +148,9 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	if !ok {
 		val,ok = n.data[*req.ObjectName]
 		if !ok {
-			return resFeedback, status.Error(codes.Aborted, "not found")
+			n.abortTransaction(*req.TransactionID)
+			m := "ABORTED"
+			return &Feedback{Message:&m}, status.Error(codes.Aborted, "not found")
 		}
 	}
 	resFeedback.Message = &val
@@ -160,13 +165,24 @@ func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedba
 			for k,v := range n.uncommittedHistory.Get(i).CurrState {
 				n.data[k] = v
 			}
-			currEntry := n.uncommittedHistory.Delete(i)
-			if currEntry.LockType == "W" {
-				n.WUnLock(currEntry.ObjName,currEntry.transactionID)
-			}else{
-				n.RUnLock(currEntry.ObjName,currEntry.transactionID)
+			fmt.Println(n.data)
+			break
+		}
+	}
+	releasedLock := make(map[string]string)
+	for i:=0; i< n.uncommittedHistory.Size(); i++ {
+		currEntry := n.uncommittedHistory.Get(i)
+		if currEntry.transactionID == *req.Id {
+			if _,ok := releasedLock[currEntry.ObjName]; !ok {
+				releasedLock[currEntry.ObjName] = currEntry.transactionID
+				if currEntry.LockType == "W" {
+					n.WUnLock(currEntry.ObjName,currEntry.transactionID)
+				}else{
+					n.RUnLock(currEntry.ObjName,currEntry.transactionID)
+				}
 			}
-
+			n.uncommittedHistory.Delete(i)
+			i--
 		}
 	}
 	res := Feedback{}
@@ -197,7 +213,6 @@ func (n *Node) abortTransaction(transactionID string) {
 
 func (n *Node) RLock(objectName string, transactionID string) bool{
 	n.lockMapLock.Lock()
-	fmt.Println("RLOCK CHECK:", n.lockMap[objectName].owners[transactionID])
 	if n.lockMap[objectName].owners[transactionID].lockType == "W" {
 		n.lockMapLock.Unlock()
 		return true
@@ -246,7 +261,7 @@ func (n *Node) RUnLock(objectName string, transactionID string) {
 
 func (n *Node) WLock(objectName string, transactionID string) bool{
 
-	fmt.Println("WLock on ", objectName)
+	//fmt.Println("WLock on ", objectName)
 	tryLockParam := TryLockParam{}
 	tryLockParam.TransactionID = &transactionID
 	tryLockParam.ServerIdentifier = &n.Name
@@ -269,7 +284,7 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 func (n *Node) WUnLock(objectName string, transactionID string) {
 	n.lockMapLock.Lock()
 	defer n.lockMapLock.Unlock()
-	fmt.Println("WUnLock on ", objectName)
+	//fmt.Println("WUnLock on ", objectName)
 	reportUnlockParam := ReportUnLockParam{}
 	reportUnlockParam.Object = &objectName
 	reportUnlockParam.ServerIdentifier = &n.Name

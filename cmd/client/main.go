@@ -80,6 +80,7 @@ func main() {
 						s, _ := status.FromError(err)
 						if s.Code().String() == "Aborted" {
 							fmt.Println("ABORTED")
+							return
 						}
 						if err == nil{
 							fmt.Println(*feedback.Message)
@@ -91,9 +92,12 @@ func main() {
 						getparam.ServerIdentifier = &val[0]
 						getparam.ObjectName = &val[1]
 						feedback,err := serverConn[idx].ClientGet(context.Background(),&getparam)
-						if err != nil{
-							fmt.Println("error!", err)
-						}else{
+						s, _ := status.FromError(err)
+						if s.Code().String() == "Aborted" {
+							fmt.Println("ABORTED")
+							return
+						}
+						if err == nil{
 							fmt.Println(*feedback.Message)
 						}
 
