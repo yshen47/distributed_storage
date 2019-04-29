@@ -99,7 +99,6 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	resFeedback := &Feedback{}
 	result := "OK"
 	resFeedback.Message = &result
-	fmt.Println("About to return 67")
 	return resFeedback, nil
 }
 
