@@ -9,11 +9,15 @@ import (
 	"mp3/server"
 	"mp3/utils"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 func main() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	serverPorts := [5]string {"6000", "6100", "6200", "6300", "6400"}
 	coordPort := "6500"
@@ -34,9 +38,17 @@ func main() {
 	currTransactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
 	utils.CheckError(err)
 
+	go func() {
+		_ = <-sigs
+		feedback, err :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
+		utils.CheckError(err)
+		fmt.Println(*feedback.Message)
+		os.Exit(3)
+	}()
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
+		fmt.Println()
 		fmt.Print("Enter text: ")
 		text, error := reader.ReadString('\n')
 		if error != nil {
@@ -81,10 +93,11 @@ func main() {
 							s, _ := status.FromError(err)
 							if s.Code().String() == "Aborted" {
 								fmt.Println("ABORTED")
-								return
+								os.Exit(4)
 							}
 							if err == nil{
 								fmt.Println(*feedback.Message)
+								fmt.Print("Enter text:")
 							}
 						}()
 					}else {
@@ -97,10 +110,11 @@ func main() {
 							s, _ := status.FromError(err)
 							if s.Code().String() == "Aborted" {
 								fmt.Println("ABORTED")
-								return
+								os.Exit(5)
 							}
 							if err == nil{
 								fmt.Println(*feedback.Message)
+								fmt.Print("Enter text:")
 							}
 						}()
 					}
