@@ -70,37 +70,39 @@ func main() {
 			if temp, ok := strconv.Atoi(val[0]); ok==nil{
 				if idx := (temp-6000)/100; idx < 5 {
 					if cmd == "SET" {
-						setparam := server.SetParams{}
-						setparam.ObjectName = &val[1]
-						setparam.TransactionID = currTransactionID.Id
-						setparam.ServerIdentifier = &val[0]
-						setparam.Value = &words[2]
-						feedback, err := serverConn[idx].ClientSet(context.Background(),&setparam)
-						//fmt.Println("idx = ",idx)
-						s, _ := status.FromError(err)
-						if s.Code().String() == "Aborted" {
-							fmt.Println("ABORTED")
-							return
-						}
-						if err == nil{
-							fmt.Println(*feedback.Message)
-						}
-
+						go func() {
+							setparam := server.SetParams{}
+							setparam.ObjectName = &val[1]
+							setparam.TransactionID = currTransactionID.Id
+							setparam.ServerIdentifier = &val[0]
+							setparam.Value = &words[2]
+							feedback, err := serverConn[idx].ClientSet(context.Background(),&setparam)
+							//fmt.Println("idx = ",idx)
+							s, _ := status.FromError(err)
+							if s.Code().String() == "Aborted" {
+								fmt.Println("ABORTED")
+								return
+							}
+							if err == nil{
+								fmt.Println(*feedback.Message)
+							}
+						}()
 					}else {
-						getparam := server.GetParams{}
-						getparam.TransactionID = currTransactionID.Id
-						getparam.ServerIdentifier = &val[0]
-						getparam.ObjectName = &val[1]
-						feedback,err := serverConn[idx].ClientGet(context.Background(),&getparam)
-						s, _ := status.FromError(err)
-						if s.Code().String() == "Aborted" {
-							fmt.Println("ABORTED")
-							return
-						}
-						if err == nil{
-							fmt.Println(*feedback.Message)
-						}
-
+						go func() {
+							getparam := server.GetParams{}
+							getparam.TransactionID = currTransactionID.Id
+							getparam.ServerIdentifier = &val[0]
+							getparam.ObjectName = &val[1]
+							feedback,err := serverConn[idx].ClientGet(context.Background(),&getparam)
+							s, _ := status.FromError(err)
+							if s.Code().String() == "Aborted" {
+								fmt.Println("ABORTED")
+								return
+							}
+							if err == nil{
+								fmt.Println(*feedback.Message)
+							}
+						}()
 					}
 				}
 			}else{
