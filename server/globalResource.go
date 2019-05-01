@@ -16,15 +16,35 @@ type CoordinatorDelegate interface{
 	CheckDeadlock(initTransactionID string) bool
 }
 
+type ResourceObject2 struct {
+	abortList
+	upgradeList:
+	waitingQueue: [(id + lockType)]
+	lockHolder: [(lockType)]
+}
+
+func () GetNextTarget() string {
+	//holder type: W    1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
+	//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
+	//holder type: nil  1.ID to be aborted 2. upgradeLIst writer 3.writer 4. reader
+	return ""
+}
+
 // StringDictionary the set of Items
 type ResourceMap struct {
-	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: transactionID + "_" + lockType
-	lock  sync.RWMutex
+	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: [transactionID + "_" + lockType]
+	lock  sync.Mutex
+
 }
 
 type ResourceObject struct {
-	lock 	sync.RWMutex
-	owners	[] Owner
+	lock 	sync.Mutex
+	cond  	sync.Cond
+	abortList
+	upgradeList
+	waitingQueue
+	lockHolders []Owner
+	//owners	[] Owner
 }
 
 type Owner struct {
@@ -98,6 +118,8 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 }
 
 func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bool {
+
+
 	resourceKey := d.ConstructKey(param)
 	hangingLockType := *param.LockType
 	if coordinator.CheckDeadlock(param) {
@@ -120,6 +142,16 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 		d.Get(resourceKey).lock.RLock()
 	} else {
 		d.Get(resourceKey).lock.Lock()
+	}
+	m.lock
+	for param.TransactionID != GettargetID {
+		sync.Cond.Wait()
+	}
+	m.unlock
+
+	if param.TransactionID in abortList {
+		return false
+
 	}
 	d.Set(param)
 	coordinator.transactionDependency.Delete(*param.TransactionID)

@@ -88,6 +88,7 @@ func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (
 		c.globalResources.Get(resourceKey).lock.RUnlock()
 	}
 
+	c.broadcast()
 	fmt.Println("Unlock with param: ", *req.TransactionID)
 	fmt.Println(c.globalResources.Get(resourceKey).owners)
 	fmt.Println("=================")
