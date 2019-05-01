@@ -23,38 +23,46 @@ func (ro *ResourceObject)Init() {
 	ro.cond = *sync.NewCond(&ro.mutex)
 }
 
-func (ro *ResourceObject) GetNextTarget(modified bool) string {
+func (ro *ResourceObject) GetNextTarget(modified bool) transactionUnit {
 	//ro.mutex.Lock()
 	//defer ro.mutex.Unlock()
-	if ro.getHolderType() == "W" || ro.getHolderType() == "" {
-		//holder type: W or nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
+	holderType := ro.getHolderType()
+	if holderType == "W" {
+		//holder type: W  1.ID to be aborted
 		if ro.abortList.Size() > 0 {
 			abortID := ro.abortList.Pop("W", modified)
-			return abortID.transactionID
+			return abortID
+		}
+		return transactionUnit{transactionID:"RESERVEDKEY", lockType:"NA"}
+	} else if holderType == "" {
+		//holder type: nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
+		if ro.abortList.Size() > 0 {
+			abortID := ro.abortList.Pop("W", modified)
+			return abortID
 		}
 		if ro.upgradeList.Size() > 0 {
 			upgradeID := ro.upgradeList.Pop("W", modified)
-			return upgradeID.transactionID
+			return upgradeID
 		}
 		waitingID := ro.waitingQueue.Pop("", modified)
-		return waitingID.transactionID
-
-	} else if ro.getHolderType() == "R" {
+		return waitingID
+	} else if holderType == "R" {
 		//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
 		if ro.abortList.Size() > 0 {
 			abortID := ro.abortList.Pop("W", modified)
-			return abortID.transactionID
+			return abortID
 		}
 		if ro.upgradeList.Size() > 0 {
-			return "RESERVEDKEY"
+			return transactionUnit{transactionID:"RESERVEDKEY", lockType:"NA"}
 		}
 		waitingID := ro.waitingQueue.Pop("", modified)
-		return waitingID.transactionID
+		return waitingID
 	}  else {
-		fmt.Println("Lock holders have mixed types!")
+		fmt.Println("Lock holders have mixed types! ", holderType, ro.lockHolders.firstReaderLoc, ro.lockHolders.Size())
+		ro.PrintContent()
 		os.Exit(6)
 	}
-	return ""
+	return transactionUnit{transactionID:"", lockType:"NA"}
 }
 
 func (ro *ResourceObject) getHolderType() string {

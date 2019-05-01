@@ -91,11 +91,13 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	d.items[resourceKey].mutex.Lock()
 	fmt.Println("*param.TransactionID:", *param.TransactionID)
 	fmt.Println("d.items[resourceKey].GetNextTarget()", d.items[resourceKey].GetNextTarget(false))
-	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget(false) {
+	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget(false).transactionID {
 		d.items[resourceKey].cond.Wait()
 	}
-	d.items[resourceKey].GetNextTarget(true)
-	d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType})
+	currUnit := d.items[resourceKey].GetNextTarget(true)
+	if !d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType}) {
+		d.items[resourceKey].lockHolders.Append(currUnit)
+	}
 	d.items[resourceKey].mutex.Unlock()
 
 	coordinator.transactionDependency.Delete(*param.TransactionID)

@@ -116,6 +116,9 @@ func (d *TransactionUnitList) Remove(unit transactionUnit) bool {
 	for i, v := range d.items {
 		if v.transactionID == unit.transactionID && v.lockType == unit.lockType {
 			d.items = append(d.items[:i], d.items[i+1:]...)
+			if unit.lockType == "W" {
+				d.firstReaderLoc -= 1
+			}
 			return true
 		}
 	}
