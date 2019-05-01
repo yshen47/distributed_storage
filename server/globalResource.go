@@ -114,9 +114,9 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 
 	}
 	if hangingLockType == "R" {
-		d.Get(resourceKey).lock.RLock()
+		d.Get(resourceKey).mutex.RLock()
 	} else {
-		d.Get(resourceKey).lock.Lock()
+		d.Get(resourceKey).mutex.Lock()
 	}
 	m.lock
 	for param.TransactionID != GettargetID {

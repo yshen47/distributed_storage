@@ -75,3 +75,26 @@ func (d *TransactionUnitList) Size() int {
 	defer d.lock.RUnlock()
 	return len(d.items)
 }
+
+
+func (d *TransactionUnitList) PrintContent() {
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+	fmt.Println("-----------------")
+	for _, v := range d.items {
+		fmt.Println(v.transactionID, " ", v.lockType)
+	}
+	fmt.Println("=================")
+}
+
+func (d *TransactionUnitList) Remove(unit transactionUnit) bool {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	for i, v := range d.items {
+		if v.transactionID == unit.transactionID && v.lockType == unit.lockType {
+			d.items = append(d.items[:i], d.items[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
