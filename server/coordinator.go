@@ -67,6 +67,7 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 	} else {
 		message := "Abort"
 		fmt.Println("Abort the mutex with param: ", *req)
+		c.globalResources.Get(resourceKey).PrintContent()
 		return &Feedback{Message:&message}, status.Errorf(codes.Aborted, "transaction aborted, found deadlock!")
 	}
 }
