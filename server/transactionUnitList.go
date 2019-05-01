@@ -93,10 +93,11 @@ func (d* TransactionUnitList) Get(idx int) *transactionUnit {
 }
 
 
-func (d *TransactionUnitList) PrintContent() {
+func (d *TransactionUnitList) PrintContent(title string) {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
 	fmt.Println("-----------------")
+	fmt.Println(title)
 	for _, v := range d.items {
 		fmt.Println(v.transactionID, " ", v.lockType)
 	}

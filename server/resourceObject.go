@@ -81,3 +81,10 @@ func (ro *ResourceObject) UnlockHolder(unit transactionUnit) {
 	ro.cond.Broadcast()
 	ro.mutex.Unlock()
 }
+
+func (ro *ResourceObject) PrintContent() {
+	ro.waitingQueue.PrintContent("waitingQueue:")
+	ro.lockHolders.PrintContent("lockholders:")
+	ro.abortList.PrintContent("abortList:")
+	ro.upgradeList.PrintContent("upgradeList:")
+}

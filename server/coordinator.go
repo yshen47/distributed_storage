@@ -56,12 +56,12 @@ func (c *Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction)
 }
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
-	fmt.Println("received new trylock request with transactionID: ", *req.TransactionID, ", server:", *req.ServerIdentifier, ", object:", *req.Object)
+	fmt.Println("received new trylock request with transactionID: ", *req.TransactionID, ", lockType:", *req.LockType, ", server:", *req.ServerIdentifier, ", object:", *req.Object)
 	resourceKey := c.globalResources.ConstructKey(*req)
 	if c.globalResources.TryLockAt(*req, c) {
 		message := "Success"
 		fmt.Println("Got the mutex with param: ", *req.TransactionID)
-		c.globalResources.Get(resourceKey).lockHolders.PrintContent()
+		c.globalResources.Get(resourceKey).PrintContent()
 		//time.Sleep(10 * time.Second)
 		return &Feedback{Message:&message}, nil
 	} else {
@@ -75,7 +75,7 @@ func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (
 	resourceKey := utils.Concatenate(*req.ServerIdentifier, "_", *req.Object)
 	c.globalResources.Get(resourceKey).UnlockHolder(transactionUnit{transactionID:*req.TransactionID, lockType:*req.LockType})
 	fmt.Println("Unlock with param: ", *req.TransactionID)
-	c.globalResources.Get(resourceKey).lockHolders.PrintContent()
+	c.globalResources.Get(resourceKey).PrintContent()
 	return &Empty{}, nil
 }
 
