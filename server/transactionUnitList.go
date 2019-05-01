@@ -39,7 +39,6 @@ func (d *TransactionUnitList) Append(v transactionUnit) {
 	}
 }
 
-// GetTransactionToCommit front
 func (d *TransactionUnitList) Pop(lockType string) transactionUnit {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -85,13 +84,26 @@ func (d* TransactionUnitList) Get(idx int) *transactionUnit {
 	return &d.items[idx]
 }
 
-func (d* TransactionUnitList) Delete(idx int) *transactionUnit{
+
+func (d *TransactionUnitList) PrintContent() {
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+	fmt.Println("-----------------")
+	for _, v := range d.items {
+		fmt.Println(v.transactionID, " ", v.lockType)
+	}
+	fmt.Println("=================")
+}
+
+func (d *TransactionUnitList) Remove(unit transactionUnit) bool {
 	d.lock.Lock()
 	defer d.lock.Unlock()
-
-	if idx >= len(d.items){
-		return nil
+	for i, v := range d.items {
+		if v.transactionID == unit.transactionID && v.lockType == unit.lockType {
+			d.items = append(d.items[:i], d.items[i+1:]...)
+			return true
+		}
 	}
-	d.items = append(d.items[:idx],d.items[idx+1:]...)
-	return &d.items[idx]
+	return false
 }
+

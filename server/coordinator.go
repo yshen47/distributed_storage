@@ -64,40 +64,31 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 	//}
 	if c.globalResources.TryLockAt(*req, c) {
 		message := "Success"
-		fmt.Println("Got the lock with param: ", *req.TransactionID)
-		fmt.Println(c.globalResources.Get(resourceKey).owners)
-		fmt.Println("=================")
+		fmt.Println("Got the mutex with param: ", *req.TransactionID)
+		c.globalResources.Get(resourceKey).lockHolders.PrintContent()
 		//time.Sleep(10 * time.Second)
 		return &Feedback{Message:&message}, nil
 	} else {
 		message := "Abort"
-		fmt.Println("Abort the lock with param: ", *req)
+		fmt.Println("Abort the mutex with param: ", *req)
 		return &Feedback{Message:&message}, status.Errorf(codes.Aborted, "transaction aborted, found deadlock!")
 	}
-
 }
 
 func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
 	c.globalResources.Delete(*req)
 	resourceKey := utils.Concatenate(*req.ServerIdentifier, "_", *req.Object)
-	if *req.LockType == "W" {
-		c.globalResources.Get(resourceKey).lock.Unlock()
-	} else {
-		c.globalResources.Get(resourceKey).lock.RUnlock()
-	}
-
-	c.broadcast()
+	c.globalResources.Get(resourceKey).UnlockHolder(transactionUnit{transactionID:*req.TransactionID, lockType:*req.LockType})
 	fmt.Println("Unlock with param: ", *req.TransactionID)
-	fmt.Println(c.globalResources.Get(resourceKey).owners)
-	fmt.Println("=================")
+	c.globalResources.Get(resourceKey).lockHolders.PrintContent()
 	return &Empty{}, nil
 }
 
 func (c *Coordinator) CheckDeadlock(param TryLockParam) bool {
-	fmt.Println("Dead lock detection: ")
+	fmt.Println("Dead mutex detection: ")
 	resourceKey := c.globalResources.ConstructKey(param)
 	if c.globalResources.Has(resourceKey) {
-		for _, owner := range c.globalResources.Get(resourceKey).owners {
+		for _, owner := range c.globalResources.Get(resourceKey).lockHolders.items {
 			if !(owner.lockType == "R" && *param.LockType == "R") {
 				if c.checkDeadlockHelper(*param.TransactionID, owner.transactionID) {
 					return true

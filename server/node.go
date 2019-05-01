@@ -20,8 +20,8 @@ type Node struct {
 }
 
 type TransactionEntry struct {
-	ObjName       string // record which object was read/write in current operation, used for 2PL lock
-	LockType	  string // store lock type
+	ObjName       string // record which object was read/write in current operation, used for 2PL mutex
+	LockType	  string // store mutex type
 	transactionID string
 	CurrState     map[string]string
 }

@@ -116,19 +116,15 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 
 	}
 
-	d.items[resourceKey].lock.Lock()
-	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget(){
+	d.items[resourceKey].mutex.Lock()
+	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget() {
 		d.items[resourceKey].cond.Wait()
 	}
-	d.items[resourceKey].lock.Unlock()
+
+	d.items[resourceKey].mutex.Unlock()
 
 
-	for i := 0; i < d.items[resourceKey].abortList.Size(); i++ {
-		if d.Get(resourceKey).abortList.Get(i).transactionID == *param.TransactionID {
-			d.Get(resourceKey).abortList.
-			return false
-		}
-	}
+	d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType})
 
 	d.Set(param)
 	coordinator.transactionDependency.Delete(*param.TransactionID)

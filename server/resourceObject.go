@@ -7,12 +7,12 @@ import (
 )
 
 type ResourceObject struct {
-	lock 			sync.Mutex
-	cond  			sync.Cond
-	abortList 		*TransactionUnitList
-	upgradeList 	*TransactionUnitList
-	waitingQueue	*TransactionUnitList
-	lockHolders 	*TransactionUnitList
+	mutex        sync.Mutex
+	cond         sync.Cond
+	abortList    *TransactionUnitList
+	upgradeList  *TransactionUnitList
+	waitingQueue *TransactionUnitList
+	lockHolders  *TransactionUnitList
 }
 
 func (ro *ResourceObject)Init() {
@@ -20,11 +20,12 @@ func (ro *ResourceObject)Init() {
 	ro.upgradeList = new(TransactionUnitList)
 	ro.waitingQueue = new(TransactionUnitList) //order: writer first then reader
 	ro.lockHolders = new(TransactionUnitList)
-	ro.cond = *sync.NewCond(&ro.lock)
+	ro.cond = *sync.NewCond(&ro.mutex)
 }
 
 func (ro *ResourceObject) GetNextTarget() string {
-
+	ro.mutex.Lock()
+	defer ro.mutex.Unlock()
 	if ro.getHolderType() == "W" || ro.getHolderType() == "" {
 		//holder type: W or nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 		if ro.abortList.Size() > 0 {
@@ -53,7 +54,6 @@ func (ro *ResourceObject) GetNextTarget() string {
 		fmt.Println("Lock holders have mixed types!")
 		os.Exit(6)
 	}
-
 	return ""
 }
 
@@ -64,10 +64,20 @@ func (ro *ResourceObject) getHolderType() string {
 		} else {
 			return "R"
 		}
-
 	} else if ro.lockHolders.firstReaderLoc == ro.lockHolders.Size() {
 		return "W"
 	} else {
 		return "NA"
 	}
+}
+
+func (ro *ResourceObject) UnlockHolder(unit transactionUnit) {
+	ro.mutex.Lock()
+	if !ro.lockHolders.Remove(unit) {
+		fmt.Println("unit doesn't exist in holders!")
+		ro.mutex.Unlock()
+		return
+	}
+	ro.cond.Broadcast()
+	ro.mutex.Unlock()
 }
