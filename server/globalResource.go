@@ -43,6 +43,7 @@ func (ro *ResourceObject)Init() {
 	ro.upgradeList = new(TransactionUnitList)
 	ro.waitingQueue = new(TransactionUnitList)
 	ro.lockHolders = new(TransactionUnitList)
+	ro.cond = *sync.NewCond(&ro.lock)
 }
 
 type transactionUnit struct {
@@ -141,15 +142,16 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	} else {
 		d.Get(resourceKey).lock.Lock()
 	}
-	m.lock
-	for param.TransactionID != GettargetID {
-		sync.Cond.Wait()
+	d.items[*param.TransactionID].lock.Lock()
+	for param.TransactionID !=  GetNextTarget{
+		d.items[*param.TransactionID].cond.Wait()
 	}
-	m.unlock
+	d.items[*param.TransactionID].lock.Unlock()
 
-	if param.TransactionID in abortList {
-		return false
-
+	for i := 0; i < d.items[*param.TransactionID].abortList.Size(); i++ {
+		if d.items[*param.TransactionID].abortList.Get(i).transactionID == *param.TransactionID {
+			return false
+		}
 	}
 	d.Set(param)
 	coordinator.transactionDependency.Delete(*param.TransactionID)

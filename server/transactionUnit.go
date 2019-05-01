@@ -44,3 +44,12 @@ func (d *TransactionUnitList) Size() int {
 	defer d.lock.RUnlock()
 	return len(d.items)
 }
+
+func (d* TransactionUnitList) Get(idx int) *transactionUnit {
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+	if idx > len(d.items){
+		return nil
+	}
+	return &d.items[idx]
+}
