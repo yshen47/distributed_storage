@@ -19,6 +19,14 @@ type TransactionUnitList struct {
 	firstReaderLoc int
 }
 
+func (d * TransactionUnitList) GetItems() []transactionUnit{
+	res := make([]transactionUnit, 0)
+	for _, v := range d.items {
+		res = append(res, v)
+	}
+	return res
+}
+
 // Set adds a new item to the tail of the list
 func (d *TransactionUnitList) Append(v transactionUnit) {
 	d.lock.Lock()

@@ -32,34 +32,6 @@ func (d *ResourceMap) Init() {
 	d.items = make(map[string]*ResourceObject)
 }
 
-// Set adds a new item to the ccmap
-func (d *ResourceMap) Set(param TryLockParam) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-	resourceKey := d.ConstructKey(param)
-	if d.items[resourceKey] == nil {
-		d.items[resourceKey] = new(ResourceObject)
-
-	}
-	d.items[resourceKey].owners = append(d.items[resourceKey].owners, transactionUnit{transactionID: *param.TransactionID, lockType:*param.LockType})
-}
-
-// Delete removes a value from the ccmap, given its key
-func (d *ResourceMap) Delete(param ReportUnLockParam) bool {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	resourceKey := utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
-
-	for i, owner := range d.items[resourceKey].owners {
-		if owner.transactionID == *param.TransactionID {
-			d.items[resourceKey].owners = append(d.items[resourceKey].owners[:i], d.items[resourceKey].owners[i+1:]...)
-			return true
-		}
-	}
-	return false
-}
-
 // Has returns true if the key exists in the ccmap
 func (d *ResourceMap) Has(k string) bool {
 	d.lock.RLock()
@@ -94,39 +66,34 @@ func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 }
 
 func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bool {
-
-
 	resourceKey := d.ConstructKey(param)
 	if coordinator.CheckDeadlock(param) {
 		return false
 	}
-	//first put into waiting queue
-	d.items[resourceKey].waitingQueue.Append(transactionUnit{*param.TransactionID,*param.LockType})
-	if d.Has(resourceKey) {
-		for i:=0; i<d.Get(resourceKey).waitingQueue.Size(); i++ {
-			owner := d.Get(resourceKey).waitingQueue.Get(i)
-			if !(owner.lockType == "R" && *param.LockType == "R") {
-				coordinator.transactionDependency.Set(*param.TransactionID, owner.transactionID)
-			}
-		}
-	}
 
 	if d.items[resourceKey] == nil {
 		d.items[resourceKey] = new(ResourceObject)
+		d.items[resourceKey].Init()
+	}
 
+	//first put into waiting queue
+	d.items[resourceKey].waitingQueue.Append(transactionUnit{*param.TransactionID,*param.LockType})
+	if d.Has(resourceKey) {
+		for _, holder := range d.Get(resourceKey).lockHolders.GetItems() {
+			if !(holder.lockType == "R" && *param.LockType == "R") {
+				coordinator.transactionDependency.Set(*param.TransactionID, holder.transactionID)
+			}
+		}
 	}
 
 	d.items[resourceKey].mutex.Lock()
 	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget() {
 		d.items[resourceKey].cond.Wait()
 	}
-
 	d.items[resourceKey].mutex.Unlock()
-
 
 	d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType})
 
-	d.Set(param)
 	coordinator.transactionDependency.Delete(*param.TransactionID)
 	return true
 }

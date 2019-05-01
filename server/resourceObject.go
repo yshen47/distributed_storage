@@ -24,8 +24,8 @@ func (ro *ResourceObject)Init() {
 }
 
 func (ro *ResourceObject) GetNextTarget() string {
-	ro.mutex.Lock()
-	defer ro.mutex.Unlock()
+	//ro.mutex.Lock()
+	//defer ro.mutex.Unlock()
 	if ro.getHolderType() == "W" || ro.getHolderType() == "" {
 		//holder type: W or nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 		if ro.abortList.Size() > 0 {
