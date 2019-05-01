@@ -29,6 +29,9 @@ func (d * TransactionUnitList) GetItems() []TransactionUnit {
 
 // Set adds a new item to the tail of the list
 func (d *TransactionUnitList) Append(v TransactionUnit) {
+	if d.Has(v) {
+		return
+	}
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.items == nil {

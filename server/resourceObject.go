@@ -33,6 +33,15 @@ func (ro *ResourceObject) GetNextTarget(modified bool) TransactionUnit {
 			abortID := ro.abortList.Pop("", modified)
 			return abortID
 		}
+		currHolder := ro.lockHolders.Get(0)
+		for _, v := range ro.waitingQueue.GetItems() {
+			if v.transactionID == currHolder.transactionID && v.lockType == "R" {
+				if modified {
+					ro.waitingQueue.Remove(v)
+				}
+				return v
+			}
+		}
 		return TransactionUnit{transactionID: "RESERVEDKEY", lockType:"NA"}
 	} else if holderType == "" {
 		//holder type: nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
@@ -109,8 +118,10 @@ func (ro *ResourceObject) UnlockHolder(unit TransactionUnit) {
 }
 
 func (ro *ResourceObject) PrintContent() {
+	ro.mutex.Lock()
 	ro.waitingQueue.PrintContent("waitingQueue:")
 	ro.lockHolders.PrintContent("lockholders:")
 	ro.abortList.PrintContent("abortList:")
 	ro.upgradeList.PrintContent("upgradeList:")
+	ro.mutex.Unlock()
 }

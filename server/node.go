@@ -55,8 +55,6 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	if *req.ServerIdentifier != n.Name {
 		return nil, status.Error(codes.InvalidArgument, "Called the wrong node server")
 	}
-
-	//TODO: add WLOCK
 	n.lockMapLock.Lock()
 	_, ok := n.lockMap[*req.ObjectName]
 	if !ok {
