@@ -90,6 +90,7 @@ func (ro *ResourceObject) AppendToUpgradeList(unit TransactionUnit) {
 	ro.upgradeList.Append(unit)
 	ro.mutex.Unlock()
 }
+
 func (ro *ResourceObject) UnlockHolder(unit TransactionUnit) {
 	ro.mutex.Lock()
 	if !ro.lockHolders.Remove(unit) {
