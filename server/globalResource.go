@@ -16,35 +16,12 @@ type CoordinatorDelegate interface{
 	CheckDeadlock(initTransactionID string) bool
 }
 
-func () GetNextTarget() string {
-	//holder type: W    1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
-	//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
-	//holder type: nil  1.ID to be aborted 2. upgradeLIst writer 3.writer 4. reader
-	return ""
-}
-
 // StringDictionary the set of Items
 type ResourceMap struct {
 	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: [transactionID + "_" + lockType]
 	lock  sync.RWMutex
 }
 
-type ResourceObject struct {
-	lock 			sync.Mutex
-	cond  			sync.Cond
-	abortList 		*TransactionUnitList
-	upgradeList 	*TransactionUnitList
-	waitingQueue	*TransactionUnitList
-	lockHolders 	*TransactionUnitList
-}
-
-func (ro *ResourceObject)Init() {
-	ro.abortList = new(TransactionUnitList)
-	ro.upgradeList = new(TransactionUnitList)
-	ro.waitingQueue = new(TransactionUnitList)
-	ro.lockHolders = new(TransactionUnitList)
-	ro.cond = *sync.NewCond(&ro.lock)
-}
 
 type transactionUnit struct {
 	transactionID 	string
