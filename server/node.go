@@ -35,7 +35,7 @@ func (h *TransactionEntry)initHistory(id string, objName string, locktype string
 
 
 type LockTuple struct {
-	mutex         	sync.RWMutex
+	//mutex         	sync.RWMutex
 	owners 	map[string]transactionUnit
 }
 // NodeServer is the server API for Node service.
@@ -234,9 +234,9 @@ func (n *Node) RLock(objectName string, transactionID string) bool{
 		return false
 	}
 
-	n.lockMapLock.Lock()
-	n.lockMap[objectName].mutex.RLock()
-	n.lockMapLock.Unlock()
+	//n.lockMapLock.Lock()
+	//n.lockMap[objectName].mutex.RLock()
+	//n.lockMapLock.Unlock()
 	return true
 }
 
@@ -255,7 +255,7 @@ func (n *Node) RUnLock(objectName string, transactionID string) {
 	reportUnlockParam.LockType = &lockType
 	_, err := n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
 	utils.CheckError(err)
-	n.lockMap[objectName].mutex.RUnlock()
+	//n.lockMap[objectName].mutex.RUnlock()
 	delete(n.lockMap[objectName].owners, transactionID)
 }
 
@@ -275,9 +275,9 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 		n.abortTransaction(transactionID)
 		return false
 	}
-	n.lockMapLock.Lock()
-	n.lockMap[objectName].mutex.Lock()
-	n.lockMapLock.Unlock()
+	//n.lockMapLock.Lock()
+	//	//n.lockMap[objectName].mutex.Lock()
+	//	//n.lockMapLock.Unlock()
 	return true
 }
 
@@ -292,6 +292,6 @@ func (n *Node) WUnLock(objectName string, transactionID string) {
 	lockType := "W"
 	reportUnlockParam.LockType = &lockType
 	n.CoordinatorDelegate.ReportUnlock(context.Background(), &reportUnlockParam)
-	n.lockMap[objectName].mutex.Unlock()
+	//n.lockMap[objectName].mutex.Unlock()
 	delete(n.lockMap[objectName].owners, transactionID)
 }

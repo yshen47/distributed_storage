@@ -36,7 +36,7 @@ func (ro *ResourceObject) GetNextTarget() string {
 			upgradeID := ro.upgradeList.Pop("W")
 			return upgradeID.transactionID
 		}
-		waitingID := ro.upgradeList.Pop("")
+		waitingID := ro.waitingQueue.Pop("")
 		return waitingID.transactionID
 
 	} else if ro.getHolderType() == "R" {
@@ -48,7 +48,7 @@ func (ro *ResourceObject) GetNextTarget() string {
 		if ro.upgradeList.Size() > 0 {
 			return "RESERVEDKEY"
 		}
-		waitingID := ro.upgradeList.Pop("")
+		waitingID := ro.waitingQueue.Pop("")
 		return waitingID.transactionID
 	}  else {
 		fmt.Println("Lock holders have mixed types!")
