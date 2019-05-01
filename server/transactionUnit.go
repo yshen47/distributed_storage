@@ -84,3 +84,14 @@ func (d* TransactionUnitList) Get(idx int) *transactionUnit {
 	}
 	return &d.items[idx]
 }
+
+func (d* TransactionUnitList) Delete(idx int) *transactionUnit{
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	if idx >= len(d.items){
+		return nil
+	}
+	d.items = append(d.items[:idx],d.items[idx+1:]...)
+	return &d.items[idx]
+}

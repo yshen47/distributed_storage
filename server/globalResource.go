@@ -97,13 +97,14 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 
 
 	resourceKey := d.ConstructKey(param)
-	hangingLockType := *param.LockType
 	if coordinator.CheckDeadlock(param) {
 		return false
 	}
-
+	//first put into waiting queue
+	d.items[resourceKey].waitingQueue.Append(transactionUnit{*param.TransactionID,*param.LockType})
 	if d.Has(resourceKey) {
-		for _, owner := range d.Get(resourceKey).owners {
+		for i:=0; i<d.Get(resourceKey).waitingQueue.Size(); i++ {
+			owner := d.Get(resourceKey).waitingQueue.Get(i)
 			if !(owner.lockType == "R" && *param.LockType == "R") {
 				coordinator.transactionDependency.Set(*param.TransactionID, owner.transactionID)
 			}
@@ -114,22 +115,21 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 		d.items[resourceKey] = new(ResourceObject)
 
 	}
-	if hangingLockType == "R" {
-		d.Get(resourceKey).lock.RLock()
-	} else {
-		d.Get(resourceKey).lock.Lock()
-	}
-	d.items[*param.TransactionID].lock.Lock()
-	for param.TransactionID !=  GetNextTarget{
-		d.items[*param.TransactionID].cond.Wait()
-	}
-	d.items[*param.TransactionID].lock.Unlock()
 
-	for i := 0; i < d.items[*param.TransactionID].abortList.Size(); i++ {
-		if d.items[*param.TransactionID].abortList.Get(i).transactionID == *param.TransactionID {
+	d.items[resourceKey].lock.Lock()
+	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget(){
+		d.items[resourceKey].cond.Wait()
+	}
+	d.items[resourceKey].lock.Unlock()
+
+
+	for i := 0; i < d.items[resourceKey].abortList.Size(); i++ {
+		if d.Get(resourceKey).abortList.Get(i).transactionID == *param.TransactionID {
+			d.Get(resourceKey).abortList.
 			return false
 		}
 	}
+
 	d.Set(param)
 	coordinator.transactionDependency.Delete(*param.TransactionID)
 	return true

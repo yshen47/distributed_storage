@@ -20,6 +20,7 @@ func (ro *ResourceObject)Init() {
 	ro.upgradeList = new(TransactionUnitList)
 	ro.waitingQueue = new(TransactionUnitList) //order: writer first then reader
 	ro.lockHolders = new(TransactionUnitList)
+	ro.cond = *sync.NewCond(&ro.lock)
 }
 
 func (ro *ResourceObject) GetNextTarget() string {
