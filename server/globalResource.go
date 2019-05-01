@@ -98,20 +98,26 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	}
 	d.items[resourceKey].PrintContent()
 	d.items[resourceKey].mutex.Lock()
-	for true {
-		nextTarget := d.items[resourceKey].GetNextTarget(false).transactionID
-		if *param.TransactionID ==  nextTarget {
+	var nextTarget TransactionUnit
+	for {
+		nextTarget = d.items[resourceKey].GetNextTarget(false)
+		if *param.TransactionID ==  nextTarget.transactionID {
 			fmt.Println("d.items[resourceKey].GetNextTarget()", d.items[resourceKey].GetNextTarget(false))
 			break
 		}
 		d.items[resourceKey].cond.Wait()
 	}
-	currUnit := d.items[resourceKey].GetNextTarget(true)
-	if !d.items[resourceKey].abortList.Remove(TransactionUnit{*param.TransactionID,*param.LockType}) {
-		if currUnit.lockType == "R" && "W" == d.items[resourceKey].getHolderType() && d.items[resourceKey].lockHolders.Get(0).transactionID == currUnit.transactionID {
+
+	d.items[resourceKey].waitingQueue.PrintContent("waitingQueue:")
+	d.items[resourceKey].lockHolders.PrintContent("lockholders:")
+	d.items[resourceKey].abortList.PrintContent("abortList:")
+	d.items[resourceKey].upgradeList.PrintContent("upgradeList:")
+	if !d.items[resourceKey].abortList.Remove(TransactionUnit{nextTarget.transactionID,nextTarget.lockType}) {
+		if nextTarget.lockType == "R" && "W" == d.items[resourceKey].getHolderType() && d.items[resourceKey].lockHolders.Get(0).transactionID == nextTarget.transactionID {
 			//don't need to add to lockholder
 		} else {
-			d.items[resourceKey].lockHolders.Append(currUnit)
+			d.items[resourceKey].GetNextTarget(true)
+			d.items[resourceKey].lockHolders.Append(nextTarget)
 		}
 	}
 	d.items[resourceKey].mutex.Unlock()
@@ -142,6 +148,7 @@ func(d *ResourceMap) AbortAllRelatedTo(transactionID string) {
 			d.items[k].AppendToAbortList(TransactionUnit{transactionID:transactionID, lockType:"R"})
 		}
 		fmt.Println("HERERER!")
+		d.items[k].PrintContent()
 		d.items[k].cond.Broadcast()
 	}
 
