@@ -14,10 +14,10 @@ import (
 type Coordinator struct {
 	globalResources       *ResourceMap   //serverIdentifier->objectName->transactionID
 	transactionDependency *DependencyMap //key depend on value, key and value is transactionID
-	ServerConnection	  []NodeClient
+	ServerConnection      []NodeClient
 }
 
-func (c *Coordinator)Init() {
+func (c *Coordinator) Init() {
 	c.globalResources = new(ResourceMap)
 	c.globalResources.Init()
 	c.transactionDependency = new(DependencyMap)
@@ -26,7 +26,7 @@ func (c *Coordinator)Init() {
 func (*Coordinator) OpenTransaction(ctx context.Context, req *Empty) (*Transaction, error) {
 	transactionID := utils.Concatenate(rand.Intn(1000000), int(time.Now().Unix()))
 	fmt.Println("OpenTransaction with transactionID: ", transactionID)
-	return &Transaction{Id:&transactionID}, nil
+	return &Transaction{Id: &transactionID}, nil
 
 }
 
@@ -36,28 +36,28 @@ func (*Coordinator) CloseTransaction(ctx context.Context, req *Transaction) (*Fe
 
 func (c *Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	fmt.Println("AskCommitTransaction with transactionID: ", *req.Id)
-	for _,elem := range c.ServerConnection {
-		_,err := elem.CommitTransaction(context.Background(),req)
+	for _, elem := range c.ServerConnection {
+		_, err := elem.CommitTransaction(context.Background(), req)
 		utils.CheckError(err, false)
 	}
 	res := Feedback{}
-	temp := "COMMITTED!"
+	temp := "COMMIT OK"
 	res.Message = &temp
-	return &res,nil
+	return &res, nil
 }
 
 func (c *Coordinator) AskAbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	fmt.Println("AskAbortTransaction with transactionID: ", *req.Id)
 	c.globalResources.AbortAllRelatedTo(*req.Id)
 
-	for _,elem := range c.ServerConnection {
-		_,err := elem.AbortTransaction(context.Background(),req)
+	for _, elem := range c.ServerConnection {
+		_, err := elem.AbortTransaction(context.Background(), req)
 		utils.CheckError(err, false)
 	}
 	res := Feedback{}
 	temp := "ABORTED!"
 	res.Message = &temp
-	return &res,nil
+	return &res, nil
 }
 
 func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback, error) {
@@ -68,20 +68,20 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 		fmt.Println("Got the mutex with param: ", *req.TransactionID)
 		c.globalResources.Get(resourceKey).PrintContent()
 		//time.Sleep(10 * time.Second)
-		return &Feedback{Message:&message}, nil
+		return &Feedback{Message: &message}, nil
 	} else {
 		message := "Abort"
 		fmt.Println("Abort the mutex with param: ", *req)
 		c.globalResources.Get(resourceKey).PrintContent()
-		c.AskAbortTransaction(context.Background(), &Transaction{Id:req.TransactionID,})
-		return &Feedback{Message:&message}, status.Errorf(codes.Aborted, "transaction aborted, found deadlock!")
+		c.AskAbortTransaction(context.Background(), &Transaction{Id: req.TransactionID})
+		return &Feedback{Message: &message}, status.Errorf(codes.Aborted, "transaction aborted, found deadlock!")
 	}
 }
 
-func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
+func (c *Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
 	fmt.Println("received new unlock request with transactionID: ", *req.TransactionID, ", lockType:", *req.LockType, ", server:", *req.ServerIdentifier, ", object:", *req.Object)
 	resourceKey := utils.Concatenate(*req.ServerIdentifier, "_", *req.Object)
-	c.globalResources.Get(resourceKey).UnlockHolder(TransactionUnit{transactionID: *req.TransactionID, lockType:*req.LockType})
+	c.globalResources.Get(resourceKey).UnlockHolder(TransactionUnit{transactionID: *req.TransactionID, lockType: *req.LockType})
 	//fmt.Println("Unlock with param: ", *req.TransactionID)
 	c.globalResources.Get(resourceKey).PrintContent()
 	return &Empty{}, nil
