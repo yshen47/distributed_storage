@@ -40,6 +40,7 @@ func (c *Coordinator) AskCommitTransaction(ctx context.Context, req *Transaction
 		_, err := elem.CommitTransaction(context.Background(), req)
 		utils.CheckError(err, false)
 	}
+	c.globalResources.AbortAllRelatedTo(*req.Id)
 	res := Feedback{}
 	temp := "COMMIT OK"
 	res.Message = &temp
