@@ -32,7 +32,7 @@ func (d *TransactionUnitList) Append(v transactionUnit) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.items == nil {
-		d.items = make([]transactionUnit, 1)
+		d.items = make([]transactionUnit, 0)
 	}
 	if v.lockType == "W" {
 		s := make([]transactionUnit, 1)
@@ -47,7 +47,7 @@ func (d *TransactionUnitList) Append(v transactionUnit) {
 	}
 }
 
-func (d *TransactionUnitList) Pop(lockType string) transactionUnit {
+func (d *TransactionUnitList) Pop(lockType string, modified bool) transactionUnit {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if lockType == "W" {
@@ -57,7 +57,9 @@ func (d *TransactionUnitList) Pop(lockType string) transactionUnit {
 		}
 		d.firstReaderLoc -= 1
 		res := d.items[0]
-		d.items = d.items[1:]
+		if modified {
+			d.items = d.items[1:]
+		}
 		return res
 	} else if lockType == "R" {
 		if d.firstReaderLoc == len(d.items){
@@ -65,14 +67,18 @@ func (d *TransactionUnitList) Pop(lockType string) transactionUnit {
 			os.Exit(9)
 		}
 		res := d.items[len(d.items)-1]
-		d.items = d.items[:len(d.items)-1]
+		if modified {
+			d.items = d.items[:len(d.items)-1]
+		}
 		return res
 	} else {
 		res := d.items[0]
 		if res.lockType == "W" {
 			d.firstReaderLoc -= 1
 		}
-		d.items = d.items[1:]
+		if modified {
+			d.items = d.items[1:]
+		}
 		return res
 	}
 }

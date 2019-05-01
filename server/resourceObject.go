@@ -23,32 +23,32 @@ func (ro *ResourceObject)Init() {
 	ro.cond = *sync.NewCond(&ro.mutex)
 }
 
-func (ro *ResourceObject) GetNextTarget() string {
+func (ro *ResourceObject) GetNextTarget(modified bool) string {
 	//ro.mutex.Lock()
 	//defer ro.mutex.Unlock()
 	if ro.getHolderType() == "W" || ro.getHolderType() == "" {
 		//holder type: W or nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 		if ro.abortList.Size() > 0 {
-			abortID := ro.abortList.Pop("W")
+			abortID := ro.abortList.Pop("W", modified)
 			return abortID.transactionID
 		}
 		if ro.upgradeList.Size() > 0 {
-			upgradeID := ro.upgradeList.Pop("W")
+			upgradeID := ro.upgradeList.Pop("W", modified)
 			return upgradeID.transactionID
 		}
-		waitingID := ro.waitingQueue.Pop("")
+		waitingID := ro.waitingQueue.Pop("", modified)
 		return waitingID.transactionID
 
 	} else if ro.getHolderType() == "R" {
 		//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
 		if ro.abortList.Size() > 0 {
-			abortID := ro.abortList.Pop("W")
+			abortID := ro.abortList.Pop("W", modified)
 			return abortID.transactionID
 		}
 		if ro.upgradeList.Size() > 0 {
 			return "RESERVEDKEY"
 		}
-		waitingID := ro.waitingQueue.Pop("")
+		waitingID := ro.waitingQueue.Pop("", modified)
 		return waitingID.transactionID
 	}  else {
 		fmt.Println("Lock holders have mixed types!")
@@ -71,6 +71,11 @@ func (ro *ResourceObject) getHolderType() string {
 	}
 }
 
+func (ro *ResourceObject) AppendToWaitingQueue(unit transactionUnit) {
+	ro.mutex.Lock()
+	ro.waitingQueue.Append(unit)
+	ro.mutex.Unlock()
+}
 func (ro *ResourceObject) UnlockHolder(unit transactionUnit) {
 	ro.mutex.Lock()
 	if !ro.lockHolders.Remove(unit) {

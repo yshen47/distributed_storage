@@ -5,6 +5,7 @@
 package server
 
 import (
+	"fmt"
 	"mp3/utils"
 	"sync"
 )
@@ -77,7 +78,8 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	}
 
 	//first put into waiting queue
-	d.items[resourceKey].waitingQueue.Append(transactionUnit{*param.TransactionID,*param.LockType})
+	d.items[resourceKey].AppendToWaitingQueue(transactionUnit{*param.TransactionID, *param.LockType})
+
 	if d.Has(resourceKey) {
 		for _, holder := range d.Get(resourceKey).lockHolders.GetItems() {
 			if !(holder.lockType == "R" && *param.LockType == "R") {
@@ -85,14 +87,16 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 			}
 		}
 	}
-
+	d.items[resourceKey].PrintContent()
 	d.items[resourceKey].mutex.Lock()
-	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget() {
+	fmt.Println("*param.TransactionID:", *param.TransactionID)
+	fmt.Println("d.items[resourceKey].GetNextTarget()", d.items[resourceKey].GetNextTarget(false))
+	for *param.TransactionID !=  d.items[resourceKey].GetNextTarget(false) {
 		d.items[resourceKey].cond.Wait()
 	}
-	d.items[resourceKey].mutex.Unlock()
-
+	d.items[resourceKey].GetNextTarget(true)
 	d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType})
+	d.items[resourceKey].mutex.Unlock()
 
 	coordinator.transactionDependency.Delete(*param.TransactionID)
 	return true
