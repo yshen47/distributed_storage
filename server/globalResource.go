@@ -16,13 +16,6 @@ type CoordinatorDelegate interface{
 	CheckDeadlock(initTransactionID string) bool
 }
 
-type ResourceObject2 struct {
-	abortList
-	upgradeList:
-	waitingQueue: [(id + lockType)]
-	lockHolder: [(lockType)]
-}
-
 func () GetNextTarget() string {
 	//holder type: W    1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 	//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
@@ -33,21 +26,26 @@ func () GetNextTarget() string {
 // StringDictionary the set of Items
 type ResourceMap struct {
 	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: [transactionID + "_" + lockType]
-	lock  sync.Mutex
-
+	lock  sync.RWMutex
 }
 
 type ResourceObject struct {
-	lock 	sync.Mutex
-	cond  	sync.Cond
-	abortList
-	upgradeList
-	waitingQueue
-	lockHolders []Owner
-	//owners	[] Owner
+	lock 			sync.Mutex
+	cond  			sync.Cond
+	abortList 		*TransactionUnitList
+	upgradeList 	*TransactionUnitList
+	waitingQueue	*TransactionUnitList
+	lockHolders 	*TransactionUnitList
 }
 
-type Owner struct {
+func (ro *ResourceObject)Init() {
+	ro.abortList = new(TransactionUnitList)
+	ro.upgradeList = new(TransactionUnitList)
+	ro.waitingQueue = new(TransactionUnitList)
+	ro.lockHolders = new(TransactionUnitList)
+}
+
+type transactionUnit struct {
 	transactionID 	string
 	lockType		string
 }
@@ -65,7 +63,7 @@ func (d *ResourceMap) Set(param TryLockParam) {
 		d.items[resourceKey] = new(ResourceObject)
 
 	}
-	d.items[resourceKey].owners = append(d.items[resourceKey].owners, Owner{transactionID:*param.TransactionID, lockType:*param.LockType})
+	d.items[resourceKey].owners = append(d.items[resourceKey].owners, transactionUnit{transactionID: *param.TransactionID, lockType:*param.LockType})
 }
 
 // Delete removes a value from the ccmap, given its key
