@@ -22,8 +22,8 @@ func main() {
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
 
 	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure(), grpc.WithBlock())
+	utils.CheckError(error, true)
 	fmt.Println("Successfully dialed coordinator")
-	utils.CheckError(error)
 	coordConn := server.NewCoordinatorClient(conn)
 
 	node := server.Node{}
@@ -32,11 +32,11 @@ func main() {
 	node.CoordinatorDelegate = coordConn
 
 
-	utils.CheckError(err)
+	utils.CheckError(err, true)
 	nodeServer := grpc.NewServer()
 	server.RegisterNodeServer(nodeServer, &node)
 	err = nodeServer.Serve(lis)
-	utils.CheckError(err)
+	utils.CheckError(err, true)
 	fmt.Println("End Process.")
 }
 

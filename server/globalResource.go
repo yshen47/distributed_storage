@@ -20,7 +20,7 @@ type CoordinatorDelegate interface{
 // StringDictionary the set of Items
 type ResourceMap struct {
 	items map[string]*ResourceObject //key: serverIdentifier + "_" + objectName, value: [transactionID + "_" + lockType]
-	lock  sync.RWMutex
+	mutex sync.RWMutex
 }
 
 
@@ -35,30 +35,30 @@ func (d *ResourceMap) Init() {
 
 // Has returns true if the key exists in the ccmap
 func (d *ResourceMap) Has(k string) bool {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
 	_, ok := d.items[k]
 	return ok
 }
 
 // Get returns the value associated with the key
 func (d *ResourceMap) Get(k string) *ResourceObject {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
 	return d.items[k]
 }
 
 // Clear removes all the items from the ccmap
 func (d *ResourceMap) Clear() {
-	d.lock.Lock()
-	defer d.lock.Unlock()
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	d.items = make(map[string]*ResourceObject)
 }
 
 // Size returns the amount of elements in the ccmap
 func (d *ResourceMap) Size() int {
-	d.lock.RLock()
-	defer d.lock.RUnlock()
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
 	return len(d.items)
 }
 
@@ -76,10 +76,13 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 		d.items[resourceKey] = new(ResourceObject)
 		d.items[resourceKey].Init()
 	}
+	if *param.LockType == "R" && d.items[resourceKey].lockHolders.Has(TransactionUnit{transactionID:*param.TransactionID, lockType:"W"}) {
+		//if lock holder is W, then for the read lock request with same transaction id, give it directly
+		return true
+	}
 
 	//first put into waiting queue
 	if *param.LockType == "W" && d.items[resourceKey].lockHolders.Has(TransactionUnit{transactionID:*param.TransactionID, lockType:"R"}) {
-		fmt.Println("HERERRE!")
 		d.items[resourceKey].UnlockHolder(TransactionUnit{*param.TransactionID, "R"})
 		d.items[resourceKey].AppendToUpgradeList(TransactionUnit{*param.TransactionID, *param.LockType})
 	} else {
@@ -108,4 +111,31 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 
 	coordinator.transactionDependency.Delete(*param.TransactionID)
 	return true
+}
+
+func(d *ResourceMap) AbortAllRelatedTo(transactionID string) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	for k, _ := range d.items {
+		wFlag := false
+		rFlag := false
+		if d.items[k].upgradeList.Remove(TransactionUnit{transactionID:transactionID, lockType:"W"}) {
+			wFlag = true
+		}
+		if d.items[k].waitingQueue.Remove(TransactionUnit{transactionID:transactionID, lockType:"W"}) {
+			wFlag = true
+		}
+		if d.items[k].waitingQueue.Remove(TransactionUnit{transactionID:transactionID, lockType:"R"}) {
+			rFlag = true
+		}
+		if wFlag {
+			d.items[k].AppendToAbortList(TransactionUnit{transactionID:transactionID, lockType:"W"})
+		}
+		if rFlag {
+			d.items[k].AppendToAbortList(TransactionUnit{transactionID:transactionID, lockType:"R"})
+		}
+		fmt.Println("HERERER!")
+		d.items[k].cond.Broadcast()
+	}
+
 }

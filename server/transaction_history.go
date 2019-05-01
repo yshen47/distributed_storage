@@ -64,3 +64,17 @@ func (d *TransactionHistory) Delete(idx int) *TransactionEntry {
 	d.items = append(d.items[:idx], d.items[idx+1:]...)
 	return &temp
 }
+
+func (d *TransactionHistory) DeleteTransaction(id string) [] TransactionEntry{
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	res := make([]TransactionEntry, 0)
+	for i := len(d.items) - 1; i >= 0; i-- {
+		if d.items[i].transactionID == id {
+			currEntry := d.items[i]
+			res = append(res, currEntry)
+			d.items = append(d.items[:i], d.items[i+1:]...)
+		}
+	}
+	return res
+}

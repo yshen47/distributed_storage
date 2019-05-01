@@ -30,14 +30,14 @@ func (ro *ResourceObject) GetNextTarget(modified bool) TransactionUnit {
 	if holderType == "W" {
 		//holder type: W  1.ID to be aborted
 		if ro.abortList.Size() > 0 {
-			abortID := ro.abortList.Pop("W", modified)
+			abortID := ro.abortList.Pop("", modified)
 			return abortID
 		}
 		return TransactionUnit{transactionID: "RESERVEDKEY", lockType:"NA"}
 	} else if holderType == "" {
 		//holder type: nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 		if ro.abortList.Size() > 0 {
-			abortID := ro.abortList.Pop("W", modified)
+			abortID := ro.abortList.Pop("", modified)
 			return abortID
 		}
 		if ro.upgradeList.Size() > 0 {
@@ -49,7 +49,7 @@ func (ro *ResourceObject) GetNextTarget(modified bool) TransactionUnit {
 	} else if holderType == "R" {
 		//holder type: R    1. ID to be aborted 2. if upgradelist != nil return nil 3. reader 4. writer
 		if ro.abortList.Size() > 0 {
-			abortID := ro.abortList.Pop("W", modified)
+			abortID := ro.abortList.Pop("", modified)
 			return abortID
 		}
 		if ro.upgradeList.Size() > 0 {
@@ -79,6 +79,12 @@ func (ro *ResourceObject) getHolderType() string {
 	}
 }
 
+func (ro *ResourceObject) AppendToAbortList(unit TransactionUnit) {
+	ro.mutex.Lock()
+	ro.abortList.Append(unit)
+	ro.mutex.Unlock()
+}
+
 func (ro *ResourceObject) AppendToWaitingQueue(unit TransactionUnit) {
 	ro.mutex.Lock()
 	ro.waitingQueue.Append(unit)
@@ -94,7 +100,7 @@ func (ro *ResourceObject) AppendToUpgradeList(unit TransactionUnit) {
 func (ro *ResourceObject) UnlockHolder(unit TransactionUnit) {
 	ro.mutex.Lock()
 	if !ro.lockHolders.Remove(unit) {
-		fmt.Println("unit doesn't exist in holders!")
+		//fmt.Println("unit doesn't exist in holders!")
 		ro.mutex.Unlock()
 		return
 	}

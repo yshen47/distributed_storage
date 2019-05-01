@@ -12,7 +12,7 @@ func main() {
 
 	portNum := 6500
 	lis, err := net.Listen("tcp", utils.Concatenate(":", portNum))
-	utils.CheckError(err)
+	utils.CheckError(err, true)
 	nodeServer := grpc.NewServer()
 	coordinator := server.Coordinator{}
 	coordinator.Init()
@@ -21,7 +21,7 @@ func main() {
 
 	server.RegisterCoordinatorServer(nodeServer, &coordinator)
 	err = nodeServer.Serve(lis)
-	utils.CheckError(err)
+	utils.CheckError(err, true)
 
 	fmt.Println("End Process.")
 }
@@ -33,7 +33,7 @@ func dial(coordinator *server.Coordinator){
 		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
 		fmt.Println("Dial ", ipaddr)
 		conn, err := grpc.Dial(ipaddr,  grpc.WithInsecure(), grpc.WithBlock())
-		utils.CheckError(err)
+		utils.CheckError(err, true)
 		temp := server.NewNodeClient(conn)
 		serverConn[i] = temp
 	}

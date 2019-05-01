@@ -28,8 +28,10 @@ func (d *DependencyMap) Set(k string, v string) {
 	if d.items[k] == nil {
 		d.items[k] = make(map[string]bool)
 	}
+	if _, ok := d.items[k][v]; !ok {
+		fmt.Println("Add New dependency, from ", k, " to ", v, ".")
+	}
 	d.items[k][v] = true
-	fmt.Println("Add New dependency, from ", k, " to ", v, ".")
 	fmt.Println(d.items[k])
 }
 

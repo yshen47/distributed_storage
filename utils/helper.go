@@ -14,7 +14,7 @@ func SetupLog(name string) *os.File {
 	_ = os.Remove(path)
 
 	f, err := os.OpenFile(path, os.O_RDWR | os.O_CREATE, 0666)
-	CheckError(err)
+	CheckError(err, true)
 
 	log.SetOutput(f)
 	//log.SetPrefix(name + " ")
@@ -44,11 +44,13 @@ func Concatenate(elem ...interface{}) string {
 }
 
 
-func CheckError(err error) {
+func CheckError(err error, exit bool) {
 	if err != nil {
 		_, fn, line, _ := runtime.Caller(1)
 		fmt.Printf("[error] %s:%d %v", fn, line, err)
-		os.Exit(7)
+		if exit {
+			os.Exit(7)
+		}
 	}
 }
 

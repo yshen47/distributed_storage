@@ -27,21 +27,21 @@ func main() {
 		ipaddr := utils.Concatenate("127.0.0.1",":",serverPorts[i])
 		fmt.Println("Dial server ", ipaddr)
 		conn, err := grpc.Dial(ipaddr, grpc.WithInsecure(), grpc.WithBlock())
-		utils.CheckError(err)
+		utils.CheckError(err, true)
 		serverConn[i] = server.NewNodeClient(conn)
 	}
 	coordAddr := utils.Concatenate("127.0.0.1",":",coordPort)
 	fmt.Println("Dial coordinator")
 	conn, error := grpc.Dial(coordAddr, grpc.WithInsecure(), grpc.WithBlock())
 	coordConn := server.NewCoordinatorClient(conn)
-	utils.CheckError(error)
+	utils.CheckError(error, true)
 	currTransactionID, err := coordConn.OpenTransaction(context.Background(),&server.Empty{})
-	utils.CheckError(err)
+	utils.CheckError(err, true)
 
 	go func() {
 		_ = <-sigs
 		feedback, err :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
-		utils.CheckError(err)
+		utils.CheckError(err, true)
 		fmt.Println(*feedback.Message)
 		os.Exit(3)
 	}()
@@ -64,14 +64,14 @@ func main() {
 
 		if cmd == "COMMIT"{
 			feedback, error :=coordConn.AskCommitTransaction(context.Background(),currTransactionID)
-			utils.CheckError(error)
+			utils.CheckError(error, true)
 			fmt.Println(*feedback.Message)
 			break
 		}else if cmd == "BEGIN"{
 			fmt.Println(currTransactionID)
 		}else if cmd == "ABORT" {
 			feedback, error :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
-			utils.CheckError(error)
+			utils.CheckError(error, true)
 			fmt.Println(*feedback.Message)
 			break
 		}else if cmd == "SET" || cmd == "GET"{
