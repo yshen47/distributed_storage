@@ -14,13 +14,13 @@ import (
 
 // TransactionUnitList the set of Items
 type TransactionUnitList struct {
-	items []transactionUnit
+	items []TransactionUnit
 	lock  sync.RWMutex
 	firstReaderLoc int
 }
 
-func (d * TransactionUnitList) GetItems() []transactionUnit{
-	res := make([]transactionUnit, 0)
+func (d * TransactionUnitList) GetItems() []TransactionUnit {
+	res := make([]TransactionUnit, 0)
 	for _, v := range d.items {
 		res = append(res, v)
 	}
@@ -28,14 +28,14 @@ func (d * TransactionUnitList) GetItems() []transactionUnit{
 }
 
 // Set adds a new item to the tail of the list
-func (d *TransactionUnitList) Append(v transactionUnit) {
+func (d *TransactionUnitList) Append(v TransactionUnit) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if d.items == nil {
-		d.items = make([]transactionUnit, 0)
+		d.items = make([]TransactionUnit, 0)
 	}
 	if v.lockType == "W" {
-		s := make([]transactionUnit, 1)
+		s := make([]TransactionUnit, 1)
 		s[0] = v
 		d.items = append(s, d.items...)
 		d.firstReaderLoc += 1
@@ -47,7 +47,7 @@ func (d *TransactionUnitList) Append(v transactionUnit) {
 	}
 }
 
-func (d *TransactionUnitList) Pop(lockType string, modified bool) transactionUnit {
+func (d *TransactionUnitList) Pop(lockType string, modified bool) TransactionUnit {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	if lockType == "W" {
@@ -89,7 +89,7 @@ func (d *TransactionUnitList) Size() int {
 	return len(d.items)
 }
 
-func (d* TransactionUnitList) Get(idx int) *transactionUnit {
+func (d* TransactionUnitList) Get(idx int) *TransactionUnit {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
 	if idx > len(d.items){
@@ -110,7 +110,7 @@ func (d *TransactionUnitList) PrintContent(title string) {
 	fmt.Println("=================")
 }
 
-func (d *TransactionUnitList) Remove(unit transactionUnit) bool {
+func (d *TransactionUnitList) Remove(unit TransactionUnit) bool {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	for i, v := range d.items {
@@ -125,3 +125,13 @@ func (d *TransactionUnitList) Remove(unit transactionUnit) bool {
 	return false
 }
 
+func (d *TransactionUnitList) Has(unit TransactionUnit) bool {
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+	for _, v := range d.items {
+		if v.transactionID == unit.transactionID && v.lockType == unit.lockType {
+			return true
+		}
+	}
+	return false
+}

@@ -36,7 +36,7 @@ func (h *TransactionEntry)initHistory(id string, objName string, locktype string
 
 type LockTuple struct {
 	//mutex         	sync.RWMutex
-	owners 	map[string]transactionUnit
+	owners 	map[string]TransactionUnit
 }
 // NodeServer is the server API for Node service.
 type NodeServer interface {
@@ -62,14 +62,14 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 	_, ok := n.lockMap[*req.ObjectName]
 	if !ok {
 		n.lockMap[*req.ObjectName] = new(LockTuple)
-		n.lockMap[*req.ObjectName].owners = make(map[string]transactionUnit)
+		n.lockMap[*req.ObjectName].owners = make(map[string]TransactionUnit)
 	}
 	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
 
 	n.lockMapLock.Unlock()
 	if !ok || (ok && n.lockMap[*req.ObjectName].owners[*req.TransactionID].lockType == "R") {
 		n.lockMapLock.Lock()
-		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = transactionUnit{transactionID: *req.TransactionID,lockType:"W"}
+		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = TransactionUnit{transactionID: *req.TransactionID,lockType:"W"}
 		n.lockMapLock.Unlock()
 		isSuccessful := n.WLock(*req.ObjectName, *req.TransactionID)
 
@@ -114,11 +114,11 @@ func (n *Node) ClientGet(ctx context.Context, req *GetParams) (*Feedback, error)
 	_, ok := n.lockMap[*req.ObjectName]
 	if !ok {
 		n.lockMap[*req.ObjectName] = new(LockTuple)
-		n.lockMap[*req.ObjectName].owners = make(map[string]transactionUnit)
+		n.lockMap[*req.ObjectName].owners = make(map[string]TransactionUnit)
 	}
 	_ , ok = n.lockMap[*req.ObjectName].owners[*req.TransactionID]
 	if !ok {
-		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = transactionUnit{transactionID: *req.TransactionID,lockType:"R"}
+		n.lockMap[*req.ObjectName].owners[*req.TransactionID] = TransactionUnit{transactionID: *req.TransactionID,lockType:"R"}
 	}
 
 	n.lockMapLock.RUnlock()

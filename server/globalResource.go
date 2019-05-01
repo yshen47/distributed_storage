@@ -24,7 +24,7 @@ type ResourceMap struct {
 }
 
 
-type transactionUnit struct {
+type TransactionUnit struct {
 	transactionID 	string
 	lockType		string
 }
@@ -78,7 +78,11 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	}
 
 	//first put into waiting queue
-	d.items[resourceKey].AppendToWaitingQueue(transactionUnit{*param.TransactionID, *param.LockType})
+	if *param.LockType == "W" && d.items[resourceKey].lockHolders.Has(TransactionUnit{transactionID:*param.TransactionID, lockType:"R"}) {
+		d.items[resourceKey].AppendToUpgradeList(TransactionUnit{*param.TransactionID, *param.LockType})
+	} else {
+		d.items[resourceKey].AppendToWaitingQueue(TransactionUnit{*param.TransactionID, *param.LockType})
+	}
 
 	if d.Has(resourceKey) {
 		for _, holder := range d.Get(resourceKey).lockHolders.GetItems() {
@@ -95,7 +99,7 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 		d.items[resourceKey].cond.Wait()
 	}
 	currUnit := d.items[resourceKey].GetNextTarget(true)
-	if !d.items[resourceKey].abortList.Remove(transactionUnit{*param.TransactionID,*param.LockType}) {
+	if !d.items[resourceKey].abortList.Remove(TransactionUnit{*param.TransactionID,*param.LockType}) {
 		d.items[resourceKey].lockHolders.Append(currUnit)
 	}
 	d.items[resourceKey].mutex.Unlock()

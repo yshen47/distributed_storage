@@ -23,7 +23,7 @@ func (ro *ResourceObject)Init() {
 	ro.cond = *sync.NewCond(&ro.mutex)
 }
 
-func (ro *ResourceObject) GetNextTarget(modified bool) transactionUnit {
+func (ro *ResourceObject) GetNextTarget(modified bool) TransactionUnit {
 	//ro.mutex.Lock()
 	//defer ro.mutex.Unlock()
 	holderType := ro.getHolderType()
@@ -33,7 +33,7 @@ func (ro *ResourceObject) GetNextTarget(modified bool) transactionUnit {
 			abortID := ro.abortList.Pop("W", modified)
 			return abortID
 		}
-		return transactionUnit{transactionID:"RESERVEDKEY", lockType:"NA"}
+		return TransactionUnit{transactionID: "RESERVEDKEY", lockType:"NA"}
 	} else if holderType == "" {
 		//holder type: nil   1.ID to be aborted 2. upgrade list writer 3.writer 4. reader
 		if ro.abortList.Size() > 0 {
@@ -53,7 +53,7 @@ func (ro *ResourceObject) GetNextTarget(modified bool) transactionUnit {
 			return abortID
 		}
 		if ro.upgradeList.Size() > 0 {
-			return transactionUnit{transactionID:"RESERVEDKEY", lockType:"NA"}
+			return TransactionUnit{transactionID: "RESERVEDKEY", lockType:"NA"}
 		}
 		waitingID := ro.waitingQueue.Pop("", modified)
 		return waitingID
@@ -62,7 +62,7 @@ func (ro *ResourceObject) GetNextTarget(modified bool) transactionUnit {
 		ro.PrintContent()
 		os.Exit(6)
 	}
-	return transactionUnit{transactionID:"", lockType:"NA"}
+	return TransactionUnit{transactionID: "", lockType:"NA"}
 }
 
 func (ro *ResourceObject) getHolderType() string {
@@ -79,12 +79,18 @@ func (ro *ResourceObject) getHolderType() string {
 	}
 }
 
-func (ro *ResourceObject) AppendToWaitingQueue(unit transactionUnit) {
+func (ro *ResourceObject) AppendToWaitingQueue(unit TransactionUnit) {
 	ro.mutex.Lock()
 	ro.waitingQueue.Append(unit)
 	ro.mutex.Unlock()
 }
-func (ro *ResourceObject) UnlockHolder(unit transactionUnit) {
+
+func (ro *ResourceObject) AppendToUpgradeList(unit TransactionUnit) {
+	ro.mutex.Lock()
+	ro.upgradeList.Append(unit)
+	ro.mutex.Unlock()
+}
+func (ro *ResourceObject) UnlockHolder(unit TransactionUnit) {
 	ro.mutex.Lock()
 	if !ro.lockHolders.Remove(unit) {
 		fmt.Println("unit doesn't exist in holders!")

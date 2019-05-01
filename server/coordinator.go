@@ -74,7 +74,7 @@ func (c *Coordinator) TryLock(ctx context.Context, req *TryLockParam) (*Feedback
 
 func (c*Coordinator) ReportUnlock(ctx context.Context, req *ReportUnLockParam) (*Empty, error) {
 	resourceKey := utils.Concatenate(*req.ServerIdentifier, "_", *req.Object)
-	c.globalResources.Get(resourceKey).UnlockHolder(transactionUnit{transactionID:*req.TransactionID, lockType:*req.LockType})
+	c.globalResources.Get(resourceKey).UnlockHolder(TransactionUnit{transactionID: *req.TransactionID, lockType:*req.LockType})
 	fmt.Println("Unlock with param: ", *req.TransactionID)
 	c.globalResources.Get(resourceKey).PrintContent()
 	return &Empty{}, nil
