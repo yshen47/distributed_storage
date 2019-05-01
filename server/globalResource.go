@@ -93,28 +93,6 @@ func (d *ResourceMap) Size() int {
 	return len(d.items)
 }
 
-//// Strings returns a slice of all the keys present
-//func (d *ResourceMap) GetKys() []string {
-//	d.lock.RLock()
-//	defer d.lock.RUnlock()
-//	keys := []string{}
-//	for i := range d.items {
-//		keys = append(keys, i)
-//	}
-//	return keys
-//}
-
-//// Strings returns a slice of all the values present
-//func (d *ResourceMap) GetVals() []string {
-//	d.lock.RLock()
-//	defer d.lock.RUnlock()
-//	values := []string{}
-//	for i := range d.items {
-//		values = append(values, d.items[i])
-//	}
-//	return values
-//}
-
 func (d *ResourceMap) ConstructKey(param TryLockParam) string {
 	return utils.Concatenate(*param.ServerIdentifier, "_", *param.Object)
 }
