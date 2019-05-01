@@ -77,14 +77,13 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 			return resFeedback, status.Errorf(codes.Aborted, "WLock aborted")
 		}
 	}
-
 	if n.uncommittedHistory.Size() == 0 {
 		h := TransactionEntry{}
 		h.initHistory(*req.TransactionID,*req.ObjectName,"W")
 		h.CurrState = make(map[string]string)
 		h.CurrState[*req.ObjectName] = *req.Value
 		n.uncommittedHistory.Append(h)
-	}else{
+	} else {
 		prevMap := n.uncommittedHistory.Get(n.uncommittedHistory.Size() - 1).CurrState
 		newMap := make(map[string]string)
 		for k,v := range prevMap {
@@ -96,7 +95,6 @@ func (n *Node) ClientSet(ctx context.Context, req *SetParams) (*Feedback, error)
 		newEntry.CurrState = newMap
 		n.uncommittedHistory.Append(newEntry)
 	}
-
 	resFeedback := &Feedback{}
 	result := "OK"
 	resFeedback.Message = &result
@@ -170,27 +168,24 @@ func (n *Node) CommitTransaction(ctx context.Context, req *Transaction) (*Feedba
 			break
 		}
 	}
-	releasedLock := make(map[string]string)
 	for i:=0; i< n.uncommittedHistory.Size(); i++ {
 		currEntry := n.uncommittedHistory.Get(i)
 		if currEntry.transactionID == *req.Id {
-			if _,ok := releasedLock[currEntry.ObjName]; !ok {
-				releasedLock[currEntry.ObjName] = currEntry.transactionID
-				if currEntry.LockType == "W" {
-					n.WUnLock(currEntry.ObjName,currEntry.transactionID)
-				}else{
-					n.RUnLock(currEntry.ObjName,currEntry.transactionID)
-				}
+			if currEntry.LockType == "W" {
+				n.WUnLock(currEntry.ObjName,currEntry.transactionID)
+			} else{
+				n.RUnLock(currEntry.ObjName,currEntry.transactionID)
 			}
-			n.uncommittedHistory.Delete(i)
-			i--
 		}
+		n.uncommittedHistory.Delete(i)
+		i--
 	}
 	res := Feedback{}
 	words := "COMMIT OK"
 	res.Message = &words
 	return &res,nil
 }
+
 func (n *Node) AbortTransaction(ctx context.Context, req *Transaction) (*Feedback, error) {
 	entries := n.uncommittedHistory.DeleteTransaction(*req.Id)
 	for _, currEntry := range entries {
@@ -225,7 +220,7 @@ func (n *Node) RLock(objectName string, transactionID string) bool{
 func (n *Node) RUnLock(objectName string, transactionID string) {
 	n.lockMapLock.Lock()
 	defer n.lockMapLock.Unlock()
-	fmt.Println("RUnLock on ", objectName)
+	fmt.Println("RUnLock on ", objectName, transactionID)
 	reportUnlockParam := ReportUnLockParam{}
 	reportUnlockParam.Object = &objectName
 	reportUnlockParam.ServerIdentifier = &n.Name
@@ -244,18 +239,21 @@ func (n *Node) WLock(objectName string, transactionID string) bool{
 	lockType := "W"
 	tryLockParam.LockType = &lockType
 	tryLockParam.Object = &objectName
+	fmt.Println("WLOCK on ", transactionID, objectName)
 	_, err := n.CoordinatorDelegate.TryLock(context.Background(), &tryLockParam)
 	s, _ := status.FromError(err)
 	if s.Code().String() == "Aborted" {
 		fmt.Println(s.Message())
 		return false
 	}
+	fmt.Println("Done WLOCK on ", transactionID, objectName)
 	return true
 }
 
 func (n *Node) WUnLock(objectName string, transactionID string) {
 	n.lockMapLock.Lock()
 	defer n.lockMapLock.Unlock()
+	fmt.Println("Unlock on ", objectName, transactionID)
 	reportUnlockParam := ReportUnLockParam{}
 	reportUnlockParam.Object = &objectName
 	reportUnlockParam.ServerIdentifier = &n.Name

@@ -40,9 +40,8 @@ func main() {
 
 	go func() {
 		_ = <-sigs
-		feedback, err :=coordConn.AskAbortTransaction(context.Background(),currTransactionID)
-		utils.CheckError(err, false)
-		fmt.Println(*feedback.Message)
+		go coordConn.AskAbortTransaction(context.Background(),currTransactionID)
+		fmt.Println("Abort transaction.")
 		os.Exit(3)
 	}()
 

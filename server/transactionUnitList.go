@@ -58,9 +58,9 @@ func (d *TransactionUnitList) Pop(lockType string, modified bool) TransactionUni
 			fmt.Println("No writer available!")
 			os.Exit(8)
 		}
-		d.firstReaderLoc -= 1
 		res := d.items[0]
 		if modified {
+			d.firstReaderLoc -= 1
 			d.items = d.items[1:]
 		}
 		return res
@@ -76,10 +76,10 @@ func (d *TransactionUnitList) Pop(lockType string, modified bool) TransactionUni
 		return res
 	} else {
 		res := d.items[0]
-		if res.lockType == "W" {
-			d.firstReaderLoc -= 1
-		}
 		if modified {
+			if res.lockType == "W" {
+				d.firstReaderLoc -= 1
+			}
 			d.items = d.items[1:]
 		}
 		return res

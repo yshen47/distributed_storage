@@ -4,7 +4,10 @@
 
 package server
 
-import "sync"
+import (
+	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
+	"sync"
+)
 
 //cat generic_ccmap.go | genny gen "Key=string TransactionEntry=*blockchain.Transaction" > [targetName].go
 
@@ -18,8 +21,9 @@ type TransactionHistory struct {
 func (d *TransactionHistory) Append(v TransactionEntry) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
+	fmt.Println("Append new transaction entry: ", v)
 	if d.items == nil {
-		d.items = make([]TransactionEntry, 1)
+		d.items = make([]TransactionEntry, 0)
 	}
 	d.items = append(d.items, v)
 }
@@ -34,7 +38,7 @@ func (d *TransactionHistory) Pop(n int) []TransactionEntry {
 		d.items = d.items[n:]
 	} else {
 		res = d.items
-		d.items = make([]TransactionEntry, 1)
+		d.items = make([]TransactionEntry, 0)
 	}
 	return res
 }

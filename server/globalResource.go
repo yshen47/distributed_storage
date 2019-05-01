@@ -84,7 +84,7 @@ func (d *ResourceMap) TryLockAt(param TryLockParam, coordinator *Coordinator) bo
 	//first put into waiting queue
 	if *param.LockType == "W" && d.items[resourceKey].lockHolders.Has(TransactionUnit{transactionID:*param.TransactionID, lockType:"R"}) {
 		d.items[resourceKey].UnlockHolder(TransactionUnit{*param.TransactionID, "R"})
-		d.items[resourceKey].AppendToUpgradeList(TransactionUnit{*param.TransactionID, *param.LockType})
+		d.items[resourceKey].AppendToUpgradeList(TransactionUnit{*param.TransactionID, "W"})
 	} else {
 		d.items[resourceKey].AppendToWaitingQueue(TransactionUnit{*param.TransactionID, *param.LockType})
 	}
